@@ -9,11 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { loginAdmin } from '@/app/lib/adminApi';
+import { ApiError } from '@/app/lib/apiError';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -22,17 +25,41 @@ const Login = () => {
     }
   }, [isAuthenticated, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast.error('Please enter both email and password');
       return;
     }
 
-    login(email, password);
-    toast.success('Login successful!');
-    router.push('/admin/dashboard');
+    try {
+      const res = await loginAdmin(email, password);
+
+      if (res) {
+        toast.success('Login successful!');
+        setTimeout(() => {
+          router.push('/admin/dashboard');
+        }, 1000);
+      } else {
+        toast.error('Invalid credentials. Please check your email/phone and password.');
+      }
+
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+        if (error.errors && error.errors.length > 0) {
+          error.errors.forEach((err) => {
+            toast.error(err);
+          });
+        }
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+        console.error('Registration error:', error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -75,7 +102,7 @@ const Login = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading}>
               Sign In
             </Button>
           </form>

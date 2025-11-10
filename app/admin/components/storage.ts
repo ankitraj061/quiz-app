@@ -1,18 +1,4 @@
-export interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswer: number;
-}
-
-export interface Quiz {
-  id: string;
-  title: string;
-  description: string;
-  timer: number;
-  questions: Question[];
-  createdAt: string;
-}
+import { Quiz } from "@/types/quiz";
 
 export interface Applicant {
   id: string;
@@ -78,21 +64,21 @@ export const storage = {
     if (storage.getQuizzes().length === 0) {
       const demoQuiz: Quiz = {
         id: '1',
-        title: 'React Fundamentals',
+        name: 'React Fundamentals',
         description: 'Test your knowledge of React basics',
-        timer: 30,
+        duration: 30,
         questions: [
           {
             id: 'q1',
-            text: 'What is React?',
+            statement: 'What is React?',
             options: ['A library', 'A framework', 'A language', 'An IDE'],
-            correctAnswer: 0
+            answer: 0
           },
           {
             id: 'q2',
-            text: 'What hook is used for side effects?',
+            statement: 'What hook is used for side effects?',
             options: ['useState', 'useEffect', 'useContext', 'useReducer'],
-            correctAnswer: 1
+            answer: 1
           }
         ],
         createdAt: new Date().toISOString()

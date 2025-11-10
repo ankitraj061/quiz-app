@@ -9,37 +9,43 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { storage, Question } from '../components/storage';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ApiError } from '@/app/lib/apiError';
+import { createQuiz } from '@/app/lib/quizApi';
+import { Question } from '@/types/quiz';
 
 export default function CreateQuiz() {
   const router = useRouter();
-  
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [timer, setTimer] = useState(30);
+  const [duration, setDuration] = useState(30);
   const [questions, setQuestions] = useState<Question[]>([
-    { id: crypto.randomUUID(), text: '', options: ['', '', '', ''], correctAnswer: 0 }
+    { id: crypto.randomUUID(), statement: '', options: ['', '', '', ''], answer: 0 }
   ]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const addQuestion = () => {
     setQuestions([
       ...questions,
-      { id: crypto.randomUUID(), text: '', options: ['', '', '', ''], correctAnswer: 0 }
+      { id: crypto.randomUUID(), statement: '', options: ['', '', '', ''], answer: 0 }
     ]);
   };
 
-  const removeQuestion = (id: string) => {
+  const removeQuestion = (id: string | undefined) => {
+    if (!id) return;
     if (questions.length > 1) {
       setQuestions(questions.filter(q => q.id !== id));
     }
   };
 
-  const updateQuestion = (id: string, field: keyof Question, value: any) => {
+  const updateQuestion = (id: string | undefined, field: keyof Question, value: any) => {
+    if (!id) return;
     setQuestions(questions.map(q => q.id === id ? { ...q, [field]: value } : q));
   };
 
-  const updateOption = (questionId: string, optionIndex: number, value: string) => {
+  const updateOption = (questionId: string | undefined, optionIndex: number, value: string) => {
+    if (!questionId) return;
     setQuestions(questions.map(q => {
       if (q.id === questionId) {
         const newOptions = [...q.options];
@@ -50,13 +56,13 @@ export default function CreateQuiz() {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       toast.error('Please enter a quiz title');
       return;
     }
 
-    const invalidQuestion = questions.find(q => !q.text.trim() || q.options.some(opt => !opt.trim()));
+    const invalidQuestion = questions.find(q => !q.statement.trim() || q.options.some(opt => !opt.trim()));
     if (invalidQuestion) {
       toast.error('Please fill in all questions and options');
       return;
@@ -64,23 +70,45 @@ export default function CreateQuiz() {
 
     const quiz = {
       id: crypto.randomUUID(),
-      title,
+      name: title,
       description,
-      timer,
+      duration,
       questions,
       createdAt: new Date().toISOString()
     };
 
-    storage.saveQuiz(quiz);
-    toast.success('Quiz created successfully!');
-    router.push('/admin/dashboard');
+    try {
+      const res = await createQuiz(quiz);
+      if (!res.success) {
+        toast.error(res.message);
+        setIsLoading(false);
+        return;
+      }
+      toast.success('Quiz created successfully!');
+      router.push('/admin/dashboard');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+        if (error.errors && error.errors.length > 0) {
+          error.errors.forEach((err) => {
+            toast.error(err);
+          });
+        }
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+        console.error('Registration error:', error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+
   };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto p-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-2 bg-liner-to-r from-primary to-accent bg-clip-text text-transparent">
             Create New Quiz
           </h1>
           <p className="text-muted-foreground">
@@ -119,8 +147,8 @@ export default function CreateQuiz() {
                 id="timer"
                 type="number"
                 min="1"
-                value={timer}
-                onChange={(e) => setTimer(parseInt(e.target.value) || 1)}
+                value={duration}
+                onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
                 className="mt-1"
               />
             </div>
@@ -148,8 +176,8 @@ export default function CreateQuiz() {
                   <Label>Question Text *</Label>
                   <Input
                     placeholder="Enter your question"
-                    value={question.text}
-                    onChange={(e) => updateQuestion(question.id, 'text', e.target.value)}
+                    value={question.statement}
+                    onChange={(e) => updateQuestion(question.id, 'statement', e.target.value)}
                     className="mt-1"
                   />
                 </div>
@@ -157,8 +185,8 @@ export default function CreateQuiz() {
                 <div>
                   <Label>Options *</Label>
                   <RadioGroup
-                    value={question.correctAnswer.toString()}
-                    onValueChange={(value) => updateQuestion(question.id, 'correctAnswer', parseInt(value))}
+                    value={question.answer.toString()}
+                    onValueChange={(value) => updateQuestion(question.id, 'answer', parseInt(value))}
                   >
                     <div className="space-y-3 mt-2">
                       {question.options.map((option, oIndex) => (
@@ -186,7 +214,7 @@ export default function CreateQuiz() {
             <Plus className="w-4 h-4" />
             Add Question
           </Button>
-          <Button onClick={handleSave} className="flex items-center gap-2 ml-auto">
+          <Button onClick={handleSave} className="flex items-center gap-2 ml-auto" disabled={isLoading}>
             <Save className="w-4 h-4" />
             Save Quiz
           </Button>

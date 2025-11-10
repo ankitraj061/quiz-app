@@ -1,17 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { useAuth } from '@/app/contexts/AuthContext';
-import { QUIZZES } from '@/app/lib/quizData';
-import { Timer } from '@/app/components/Timer';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { saveQuizAttempt } from '@/app/lib/storage';
-import { AlertCircle } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { AlertCircle, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +18,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
+import { Quiz } from "@/types/quiz";
+import { getQuizDetail, submitQuiz } from "@/app/lib/studentApi";
+import { SubmitQuiz } from "@/types/student";
+import { ApiError } from "@/app/lib/apiError";
+import { Timer } from "@/app/components/Timer";
 
 const QuizPage = () => {
   const params = useParams();
@@ -31,117 +33,198 @@ const QuizPage = () => {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submissionLoading, setSubmissionLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const quiz = QUIZZES.find((q) => q.id === quizId);
+  // Ensure component is mounted before rendering browser-only features
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const fetchQuizData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await getQuizDetail(quizId);
+      setQuiz(res.data);
+    } catch (err) {
+      console.error("Failed to fetch quiz detail:", err);
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Failed to load quiz. Please try again later."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [quizId]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/student/login');
-      return;
+    if (quizId) {
+      fetchQuizData();
     }
+  }, [fetchQuizData, quizId]);
 
-    if (!quiz) {
-      toast.error('Quiz not found');
-      router.push('/student/dashboard');
-      return;
-    }
+  // Fullscreen management
+  useEffect(() => {
+    if (!isAuthenticated || !isMounted) return;
 
-    // Enter fullscreen
     const enterFullscreen = async () => {
       try {
         await document.documentElement.requestFullscreen();
         setIsFullscreen(true);
       } catch (err) {
-        toast.error('Please enable fullscreen mode to start the quiz');
+        toast.error("Please enable fullscreen to start the quiz");
       }
     };
 
     enterFullscreen();
 
-    // Monitor fullscreen changes
     const handleFullscreenChange = () => {
-      if (!document.fullscreenElement) {
-        setIsFullscreen(false);
-        toast.warning('⚠️ Please stay in fullscreen mode during the quiz!');
-      } else {
-        setIsFullscreen(true);
+      const isNowFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isNowFullscreen);
+
+      if (!isNowFullscreen) {
+        toast.warning("⚠️ Please stay in fullscreen during the quiz!");
       }
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
       if (document.fullscreenElement) {
-        document.exitFullscreen();
+        document.exitFullscreen().catch(console.warn);
       }
     };
-  }, [isAuthenticated, quiz, router]);
+  }, [isAuthenticated, isMounted]);
+
+  // Redirect unauthenticated users
+  useEffect(() => {
+    if (!isAuthenticated && !loading) {
+      router.push("/auth/student/login");
+    }
+  }, [isAuthenticated, loading, router]);
 
   const handleAnswerChange = (questionId: string, answerIndex: number) => {
-    setAnswers({ ...answers, [questionId]: answerIndex });
+    setAnswers((prev) => ({ ...prev, [questionId]: answerIndex }));
   };
 
-  const calculateScore = () => {
-    if (!quiz) return 0;
-    let correct = 0;
-    quiz.questions.forEach((q) => {
-      if (answers[q.id] === q.correctAnswer) {
-        correct++;
-      }
-    });
-    return correct;
-  };
+  const allAnswered = useMemo(() => {
+    if (!quiz) return false;
+    return Object.keys(answers).length === quiz.questions.length;
+  }, [answers, quiz]);
 
   const handleSubmit = () => {
-    if (Object.keys(answers).length < (quiz?.questions.length || 0)) {
-      toast.error('Please answer all questions before submitting');
+    if (!allAnswered) {
+      toast.error("Please answer all questions before submitting");
       return;
     }
     setShowSubmitDialog(true);
   };
 
-  const confirmSubmit = () => {
+  const confirmSubmit = async () => {
     if (!quiz || !team) return;
 
-    const score = calculateScore();
-    const attempt = {
-      id: `${Date.now()}`,
-      quizTitle: quiz.title,
-      score,
-      totalQuestions: quiz.questions.length,
-      date: new Date().toISOString(),
-      teamName: team.teamName,
-    };
+    setSubmissionLoading(true);
+    setShowSubmitDialog(false);
 
-    saveQuizAttempt(attempt);
+    try {
+      const response = quiz.questions.map((q) => ({
+        questionId: q.id ?? "",
+        answer: q.options[answers[q.id ?? ""]],
+      }));
 
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
+      const submissionData: SubmitQuiz = {
+        quizId,
+        submittedAt: new Date().toISOString(),
+        response,
+      };
+
+      const result = await submitQuiz(submissionData);
+
+      if (!result.success) {
+        throw new Error(result.message || "Submission failed");
+      }
+
+      // Exit fullscreen before navigation
+      if (document.fullscreenElement) {
+        await document.exitFullscreen().catch(console.warn);
+      }
+
+      // Navigate to results page
+      router.push(`/student/result/${quizId}`);
+      toast.success("Quiz submitted successfully!");
+    } catch (error) {
+      console.error("Submission error:", error);
+      setSubmissionLoading(false);
+
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+        error.errors?.forEach((err) => toast.error(err));
+      } else {
+        toast.error("Failed to submit quiz. Please try again.");
+      }
     }
-
-    router.push(`/student/result/${attempt.id}`);
   };
 
   const handleTimeUp = () => {
-    toast.error('Time is up!');
+    toast.error("Time is up! Submitting your answers...");
     confirmSubmit();
   };
 
-  if (!quiz || !isAuthenticated) return null;
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-lg">Loading quiz...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="py-8 flex flex-col items-center gap-4">
+            <AlertCircle className="h-12 w-12 text-destructive" />
+            <h2 className="text-xl font-bold">Quiz Loading Failed</h2>
+            <p className="text-center text-muted-foreground">{error}</p>
+            <Button onClick={fetchQuizData} className="mt-4">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (shouldn't happen but safe guard)
+  if (!isAuthenticated || !quiz) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-primary">{quiz.title}</h1>
-          <Timer duration={quiz.duration} onTimeUp={handleTimeUp} />
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary truncate">
+            {quiz.name}
+          </h1>
+          <Timer duration={quiz.duration * 60} onTimeUp={handleTimeUp} />
         </div>
 
         {!isFullscreen && (
           <Card className="mb-6 bg-warning/10 border-warning">
             <CardContent className="flex items-center gap-3 p-4">
-              <AlertCircle className="h-5 w-5 text-warning" />
+              <AlertCircle className="h-5 w-5 text-warning shrink-0" />
               <p className="text-sm font-medium">
                 Please enable fullscreen mode to continue the quiz
               </p>
@@ -152,28 +235,30 @@ const QuizPage = () => {
         <div className="space-y-6">
           {quiz.questions.map((question, index) => (
             <Card key={question.id} className="shadow-medium">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold mb-4">
-                  {index + 1}. {question.question}
+                  {index + 1}. {question.statement}
                 </h3>
                 <RadioGroup
-                  value={answers[question.id]?.toString()}
+                  value={answers[question.id ?? ""]?.toString() ?? ""}
                   onValueChange={(value) =>
-                    handleAnswerChange(question.id, parseInt(value))
+                    handleAnswerChange(question.id ?? "", parseInt(value))
                   }
+                  disabled={submissionLoading}
                 >
                   {question.options.map((option, optionIndex) => (
                     <div
                       key={optionIndex}
-                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted transition-colors"
                     >
                       <RadioGroupItem
                         value={optionIndex.toString()}
                         id={`${question.id}-${optionIndex}`}
+                        disabled={submissionLoading}
                       />
                       <Label
                         htmlFor={`${question.id}-${optionIndex}`}
-                        className="cursor-pointer flex-1"
+                        className="cursor-pointer flex-1 pt-0.5"
                       >
                         {option}
                       </Label>
@@ -189,9 +274,17 @@ const QuizPage = () => {
           <Button
             onClick={handleSubmit}
             size="lg"
-            className="bg-gradient-primary hover:opacity-90 px-12"
+            className="bg-gradient-primary hover:opacity-90 px-8 sm:px-12"
+            disabled={!allAnswered || submissionLoading || !isFullscreen}
           >
-            Submit Quiz
+            {submissionLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Quiz"
+            )}
           </Button>
         </div>
 
@@ -200,13 +293,27 @@ const QuizPage = () => {
             <AlertDialogHeader>
               <AlertDialogTitle>Submit Quiz?</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to submit your answers? You won't be able to change
-                them after submission.
+                Are you sure you want to submit your answers? You won't be able
+                to change them after submission.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Review Answers</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmSubmit}>Submit</AlertDialogAction>
+              <AlertDialogCancel disabled={submissionLoading}>
+                Review Answers
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmSubmit}
+                disabled={submissionLoading}
+              >
+                {submissionLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit"
+                )}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

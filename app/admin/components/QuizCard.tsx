@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Clock, FileQuestion, Users, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Quiz, storage } from './storage';
+import { storage } from './storage';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -18,6 +18,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Quiz } from '@/types/quiz';
+import { ApiError } from '@/app/lib/apiError';
+import { deleteQuiz } from '@/app/lib/quizApi';
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -28,17 +31,35 @@ interface QuizCardProps {
 export default function QuizCard({ quiz, applicantCount, onDelete }: QuizCardProps) {
   const router = useRouter();
 
-  const handleDelete = () => {
-    storage.deleteQuiz(quiz.id);
-    toast.success('Quiz deleted successfully!');
-    onDelete();
+  const handleDelete = async () => {
+    try {
+      const res = await deleteQuiz(quiz.id);
+      if (!res.success) {
+        toast.error("Failed to delete quiz.");
+        return;
+      }
+      toast.success('Quiz deleted successfully!');
+      onDelete();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+        if (error.errors && error.errors.length > 0) {
+          error.errors.forEach((err) => {
+            toast.error(err);
+          });
+        }
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+        console.error('Registration error:', error);
+      }
+    }
   };
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
       <CardHeader>
         <div className="flex items-start justify-between gap-4 mb-2">
-          <CardTitle className="text-xl flex-1">{quiz.title}</CardTitle>
+          <CardTitle className="text-xl flex-1">{quiz.name}</CardTitle>
           <div className="flex gap-1 shrink-0">
             <Button
               variant="ghost"
@@ -51,9 +72,9 @@ export default function QuizCard({ quiz, applicantCount, onDelete }: QuizCardPro
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Delete quiz"
                 >
@@ -64,7 +85,7 @@ export default function QuizCard({ quiz, applicantCount, onDelete }: QuizCardPro
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Quiz</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete "{quiz.title}"? This action cannot be undone.
+                    Are you sure you want to delete "{quiz.name}"? This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -87,7 +108,7 @@ export default function QuizCard({ quiz, applicantCount, onDelete }: QuizCardPro
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
-            <span>{quiz.timer} min</span>
+            <span>{quiz.duration} min</span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4" />
