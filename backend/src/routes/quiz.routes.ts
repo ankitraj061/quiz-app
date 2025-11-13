@@ -7,7 +7,7 @@ import { authenticateToken } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-// router.use(authenticateToken);
+router.use(authenticateToken);
 
 router.route("/")
     .post(validate(ZCreateQuiz), authenticateToken, asyncHandler(QuizController.createQuiz));
