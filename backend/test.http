@@ -1,0 +1,89 @@
+### Create Team
+POST http://localhost:9090/api/v1/student
+Content-Type: application/json
+
+{
+  "teamName": "Ternary brains",
+  "password": "12345678",
+  "students": [
+    {
+    "name": "Shoyeb",
+    "email": "shoyebff45@gmail.com",
+    "phone": "9327156940",
+    "isTeamLeader": true
+    }, 
+    {
+    "name": "Amkit",
+    "email": "ankit@gmail.com",
+    "phone": "9327146940",
+    "isTeamLeader": true
+    }
+  ]
+}
+### ---- Quiz -----
+# create quiz
+POST http://localhost:9090/api/v1/quiz
+Content-Type: application/json
+
+{
+  "name": "Quiz-1"
+}
+
+### get all quiz of the admin
+GET http://localhost:9090/api/v1/quiz HTTP/1.1
+
+### delet quiz of the admin
+DELETE  http://localhost:9090/api/v1/quiz/959adf14-c45f-4a1b-94f8-ee2c6e7327bb   HTTP/1.1
+
+### Update name of the question
+PATCH http://localhost:9090/api/v1/quiz/d1864dc9-303b-4d8b-bd89-c4f9a2d982f1
+Content-Type: application/json
+
+{
+  "name": "Update Quiz-1"
+}
+
+### Get quiz detail with question
+GET http://localhost:9090/api/v1/quiz/d1864dc9-303b-4d8b-bd89-c4f9a2d982f1
+
+### ----- Question ----
+
+### Add question to the quiz
+POST http://localhost:9090/api/v1/quiz/question
+Content-Type: application/json
+
+{
+  "questions": [
+    {
+      "statement": "Dummy question",
+      "quizId": "d1864dc9-303b-4d8b-bd89-c4f9a2d982f1",
+      "options": ["Swift", "Kotlin", "JavaScript", "C#"],
+      "answer": "Kotlin",
+      "score": 10
+    }
+  ]
+}
+
+
+### Update the question
+PATCH http://localhost:9090/api/v1/quiz/question/845eec41-de4b-49f1-a068-aa08a3f50ed6
+Content-Type: application/json
+
+{
+  # "statement": "Dummy question changed",
+  "options": ["Swift", "Kotlin", "C**", "C#"],
+  # "answer": "C**",
+  "score": 100
+}
+
+### Delete the question
+DELETE http://localhost:9090/api/v1/quiz/question/845eec41-de4b-49f1-a068-aa08a3f50ed6
+Content-Type: application/json
+
+### dfd
+POST http://localhost:9090/api/v1/student/resend-link
+Content-Type: application/json
+
+{
+  "email": "shoyebff45@gmail.com"
+}

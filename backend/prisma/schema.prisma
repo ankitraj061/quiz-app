@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id                 String              @id @default(uuid()) @db.Uuid
+  name               String
+  phone              String              @unique
+  email              String              @unique
+  isTeamLeader       Boolean             @default(false)
+  teamId             String?             @db.Uuid
+  createdAt          DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime            @updatedAt @db.Timestamptz(6)
+  password           String
+  isVerified         Boolean             @default(false)
+  // Relations
+  responses          StudentResponse[]
+  team               Team?               @relation("TeamMembers", fields: [teamId], references: [id])
+  quizParticipant    QuizParticipant[]
+  verificationTokens VerificationToken[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+model VerificationToken {
+  id         String    @id @default(uuid())
+  studentId  String    @db.Uuid
+  email      String
+  token      String    @unique
+  expiresAt  DateTime
+  verifiedAt DateTime?
+
+  student   Student  @relation(fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Team {
+  id         String   @id @default(uuid()) @db.Uuid
+  teamName   String   @unique
+  schoolName String?
+  class      String? // "11" or "12"
+  state      String?
+  city       String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  members          Student[]         @relation("TeamMembers")
+  quizParticipants QuizParticipant[]
+
+  @@index([schoolName])
+  @@index([class])
+}
+
+model Admin {
+  id        String   @id @default(uuid()) @db.Uuid
+  phone     String   @unique
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  quizzes Quiz[]
+
+  @@index([phone])
+}
+
+model Quiz {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  createdBy   String    @db.Uuid
+  duration    Int
+  description String?
+  isActive    Boolean   @default(true)
+  startTime   DateTime?
+  endTime     DateTime?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  admin        Admin             @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  questions    Question[]
+  participants QuizParticipant[]
+
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
+model Question {
+  id        String   @id @default(uuid()) @db.Uuid
+  statement String   @db.Text
+  quizId    String   @db.Uuid
+  options   Json // Store as JSON array: ["option1", "option2", "option3", "option4"]
+  answer    String
+  score     Int      @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  quiz      Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  responses StudentResponse[]
+
+  @@index([quizId])
+}
+
+model QuizParticipant {
+  id          String    @id @default(uuid()) @db.Uuid
+  quizId      String    @db.Uuid
+  teamId      String?   @db.Uuid
+  studentId   String    @db.Uuid
+  totalScore  Int       @default(0)
+  submittedAt DateTime?
+
+  certificateGenerated Boolean  @default(false)
+  certificateSent      Boolean  @default(false)
+  createdAt            DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  quiz    Quiz    @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  team    Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, studentId]) // One participation per team per quiz
+  @@index([quizId])
+  @@index([teamId])
+  @@index([submittedAt])
+}
+
+model StudentResponse {
+  id            String   @id @default(uuid()) @db.Uuid
+  questionId    String   @db.Uuid
+  studentId     String   @db.Uuid
+  studentAnswer String
+  isCorrect     Boolean
+  score         Int      @default(1)
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, studentId]) // One response per question per student
+  @@index([studentId])
+  @@index([questionId])
+  @@index([isCorrect])
+}
