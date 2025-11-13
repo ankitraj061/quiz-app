@@ -7,13 +7,16 @@ import { authenticateToken } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.use(authenticateToken);
+// router.use(authenticateToken);
 
 router.route("/")
     .post(validate(ZCreateQuiz), authenticateToken, asyncHandler(QuizController.createQuiz));
 
 router.route("/")
     .get(asyncHandler(QuizController.getAllQuiz));
+    
+router.route("/leaderboard/:quizId")
+    .get(asyncHandler(QuizController.getApplicantsOfQuiz));
 
 
 router.route("/question")
@@ -34,5 +37,6 @@ router.route("/:quizId")
     
 router.route("/:quizId")
     .patch(validate(ZQuizUpdate), asyncHandler(QuizController.updateQuiz));
+
 
 export default router;

@@ -291,4 +291,59 @@ export class QuizRepository {
             },
         });
     }
+
+    static async getLeaderboard(quizId: string) {
+        const data = await prisma.quizParticipant.findMany({
+            where: { quizId },
+            select: {
+                id: true,
+                student: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        responses: {
+                            where: {
+                                isCorrect: true,
+                                question: {
+                                    quizId: quizId
+                                }
+                            },
+                            select: {
+                                id: true,
+                                isCorrect: true
+                            }
+                        }
+                    }
+                },
+                team: {
+                    select: {
+                        id: true,
+                        teamName: true
+                    }
+                },
+                totalScore: true,
+                submittedAt: true
+            },
+            orderBy: [
+                {
+                    totalScore: "desc"
+                },
+                {
+                    submittedAt: "asc" // Earlier submission wins the tie
+                }
+            ]
+        });
+
+        // Transform data to include correct answer count
+        return data.map(participant => ({
+            id: participant.id,
+            studentName: participant.student.name,
+            studentEmail: participant.student.email,
+            teamName: participant.team?.teamName || null,
+            totalScore: participant.totalScore,
+            totalCorrectAnswers: participant.student.responses.length,
+            submittedAt: participant.submittedAt
+        }));
+    }
 }

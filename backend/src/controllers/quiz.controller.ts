@@ -4,7 +4,7 @@ import { QuizRepository } from "../repository/quiz.repository";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { HTTP_STATUS } from "../utils/httpCodes";
-
+import { verifyUUID } from "../utils/objectManipilator";
 
 export class QuizController {
     static getUserId(req: Request) {
@@ -125,5 +125,37 @@ export class QuizController {
             throw new ApiError("Failed to remove the question, please try again.");
         }
         ApiResponse.success(res, deletedQuestion, "Successfully removed the question from the quiz.");
+    }
+
+    static async getApplicantsOfQuiz(req: Request, res: Response) {
+        const quizId = req.params.quizId as string;
+        if (!verifyUUID(quizId)) {
+            throw new ApiError("Given ID is not valid quiz ID.");
+        }
+        const quiz = await QuizRepository.getById(quizId);
+
+        if (!quiz) {
+            throw new ApiError("No quiz found with given quiz ID.");
+        }
+
+        const [participants, questions] = await Promise.all([QuizRepository.getLeaderboard(quizId), QuizRepository.getAllQuestions(quizId)]);
+        if (!participants) {
+            throw new ApiError("Failed to load participants data.");
+        }
+        
+        let totalMarks = 0;
+        questions.forEach(quest => {
+            totalMarks += quest.score;
+        });
+
+        ApiResponse.success(res, {
+            quizDetail: {
+                quizName: quiz.name,
+                description: quiz.description,
+                totalQuestions: questions.length,
+                totalMarks
+            },
+            participants, 
+        }, "Sucessfully retrieved leaderboard.");
     }
 }

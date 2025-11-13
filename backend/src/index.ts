@@ -1,5 +1,8 @@
 import { app } from "./app";
 import { errorHandler } from "./middlewares/error.middleware";
+import dotenv from "dotenv";
+dotenv.config();
+
 import { config } from "./config";
 
 
