@@ -72,3 +72,15 @@ export async function updateQuiz(quiz: Quiz) {
     const response: ApiSuccessReponse<unknown> = await res.json();
     return response;
 }
+
+
+export async function getApplicantsByQuizId(quizId: string) {
+    const res = await fetch(`${config.backendUrl}/api/v1/quiz/leaderboard/${quizId}`, {
+        method: "GET", credentials: "include"
+    });
+    if (!res.ok) {
+        await handleApiError(res, "Failed to get applicants for the quiz");
+    }
+    const resposne: ApiSuccessReponse<unknown> = await res.json();
+    return resposne.data;
+}

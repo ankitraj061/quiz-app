@@ -52,11 +52,11 @@ const Login = () => {
   const [resendEmail, setResendEmail] = useState('');
   const [isResending, setIsResending] = useState(false);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, checkAuth } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/student/dashboard');
+      router.replace('/student/dashboard');
     }
   }, [isAuthenticated, router]);
 
@@ -67,19 +67,25 @@ const Login = () => {
       toast.error('Please fill in all fields');
       return;
     }
+    
     const data = parseIdentifier(identifier, password);
     if (!data) {
       toast.error('Please enter a valid email or 10-digit phone number');
       return;
     }
+    
     try {
       setIsLoading(true);
       const success = await loginStudent(data);
+      
       if (success) {
         toast.success('Login successful!');
-        setTimeout(() => {
-          router.push('/student/dashboard');
-        }, 1000);
+        
+        // Immediately refresh auth state
+        await checkAuth();
+        
+        // Use replace to prevent back button issues
+        router.replace('/student/dashboard');
       } else {
         toast.error('Invalid credentials. Please check your email/phone and password.');
       }
@@ -93,48 +99,47 @@ const Login = () => {
         }
       } else {
         toast.error('An unexpected error occurred. Please try again.');
-        console.error('Registration error:', error);
+        console.error('Login error:', error);
       }
     } finally {
       setIsLoading(false);
     }
   };
 
- const handleResendVerification = async (e: React.FormEvent) => {
-  e.preventDefault();
-  e.stopPropagation(); // Add this line to stop event bubbling
+  const handleResendVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  if (!resendEmail.trim()) {
-    toast.error('Please enter your email');
-    return;
-  }
-
-  if (!isEmail(resendEmail)) {
-    toast.error('Please enter a valid email address');
-    return;
-  }
-
-  try {
-    setIsResending(true);
-    await resendVerificationLink(resendEmail);
-    
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    toast.success('Verification link sent! Please check your email.');
-    setIsDialogOpen(false);
-    setResendEmail('');
-  } catch (error) {
-    if (error instanceof ApiError) {
-      toast.error(error.message);
-    } else {
-      toast.error('Failed to send verification email. Please try again.');
-      console.error('Resend verification error:', error);
+    if (!resendEmail.trim()) {
+      toast.error('Please enter your email');
+      return;
     }
-  } finally {
-    setIsResending(false);
-  }
-};
 
+    if (!isEmail(resendEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      setIsResending(true);
+      await resendVerificationLink(resendEmail);
+      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      toast.success('Verification link sent! Please check your email.');
+      setIsDialogOpen(false);
+      setResendEmail('');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to send verification email. Please try again.');
+        console.error('Resend verification error:', error);
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const getIdentifierError = () => {
     if (!identifier) return null;

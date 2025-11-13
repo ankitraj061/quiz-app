@@ -17,6 +17,7 @@ const History = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [quizHistory, setQuizHistory] = useState<QuizHistory>([]);
   const [error, setError] = useState("");
+  const 
 
   const fetchQuizHistory = useCallback(async () => {
     try {
@@ -118,7 +119,15 @@ const History = () => {
                     className="w-full"
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    View Certificate
+                    View Result
+                  </Button>
+                  <Button
+                   
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Download Certificate
                   </Button>
                 </CardContent>
               </Card>
