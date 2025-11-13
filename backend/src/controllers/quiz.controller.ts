@@ -156,6 +156,6 @@ export class QuizController {
                 totalMarks
             },
             participants, 
-        });
+        }, "Sucessfully retrieved leaderboard.");
     }
 }
