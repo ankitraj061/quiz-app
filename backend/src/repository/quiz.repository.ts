@@ -17,6 +17,10 @@ export class QuizRepository {
             select: {
                 id: true, name: true, description: true, duration: true, questions: {
                     select: { id: true }
+                }, participants: {
+                    select: {
+                        id :true
+                    }
                 }
             }
         });
