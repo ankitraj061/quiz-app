@@ -4,10 +4,11 @@ import { QuizController } from "../controllers/quiz.controller";
 import { ZCreateQuestion, ZCreateQuiz, ZQuestionUpdate, ZQuizUpdate } from "../types/quiz.types";
 import { validate } from "../middlewares/validate.middleware";
 import { authenticateToken } from "../middlewares/auth.middleware";
+import { roleRequired } from "../middlewares/requiredRole.middleware";
 
 const router = Router();
 
-router.use(authenticateToken);
+router.use(authenticateToken, roleRequired("ADMIN"));
 
 router.route("/")
     .post(validate(ZCreateQuiz), authenticateToken, asyncHandler(QuizController.createQuiz));
