@@ -70,6 +70,9 @@ const Dashboard = () => {
           Choose a quiz to get started.
         </p>
       </header>
+      {!quizzes.length && !loading && !error && (
+        <p className="text-center text-muted-foreground">No quizzes available at the moment. Please check back later.</p>
+      )}
 
       {quizzes && 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

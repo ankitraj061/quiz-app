@@ -113,7 +113,7 @@ const ApplicantsPage = () => {
           <h2 className="text-2xl font-semibold mb-2 text-red-600">Error</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
           <Button asChild>
-            <Link href="/">Back to Dashboard</Link>
+            <Link href="/admin/dashboard">Back to Dashboard</Link>
           </Button>
         </div>
       </div>
@@ -126,7 +126,7 @@ const ApplicantsPage = () => {
         <div className="text-center">
           <h2 className="text-2xl font-semibold mb-2">Quiz not found</h2>
           <Button asChild>
-            <Link href="/">Back to Dashboard</Link>
+            <Link href="/admin/dashboard">Back to Dashboard</Link>
           </Button>
         </div>
       </div>
@@ -137,7 +137,7 @@ const ApplicantsPage = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto p-8">
         <Button asChild variant="ghost" className="mb-6">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/admin/dashboard" className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </Link>
@@ -193,7 +193,7 @@ const ApplicantsPage = () => {
                     <TableHead>Team</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead className="text-center">Score</TableHead>
-                    <TableHead className="text-center">Correct</TableHead>
+                    {/* <TableHead className="text-center">Correct</TableHead> */}
                     <TableHead>Submitted At</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -237,9 +237,9 @@ const ApplicantsPage = () => {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-center">
+                        {/* <TableCell className="text-center">
                           {participant.totalCorrectAnswers}/{quizDetail.totalQuestions}
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(participant.submittedAt).toLocaleString("en-IN", {
                             dateStyle: "medium",

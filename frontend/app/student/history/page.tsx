@@ -6,10 +6,12 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { getQuizAttempts } from '@/app/lib/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Award, Eye } from 'lucide-react';
+import { Calendar, Award, Eye, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { QuizHistory } from '@/types/quiz';
 import { getQuizHistory } from '@/app/lib/studentApi';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import { CertificatePDF } from './CertificatePDF';
 
 const History = () => {
   const router = useRouter();
@@ -17,7 +19,7 @@ const History = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [quizHistory, setQuizHistory] = useState<QuizHistory>([]);
   const [error, setError] = useState("");
-  const 
+  const { student, team } = useAuth();
 
   const fetchQuizHistory = useCallback(async () => {
     try {
@@ -41,9 +43,8 @@ const History = () => {
   useEffect(() => {
     const loadedAttempts = getQuizAttempts();
     setAttempts(loadedAttempts);
-    setIsLoading(false);
     fetchQuizHistory();
-  }, [router, fetchQuizHistory]);
+  }, [fetchQuizHistory]);
 
   const sortedAttempts = [...attempts].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -57,7 +58,6 @@ const History = () => {
     );
   }
 
-
   return (
     <div>
       <header className="mb-8">
@@ -66,6 +66,12 @@ const History = () => {
           View all your past quiz attempts and certificates
         </p>
       </header>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
 
       {quizHistory.length === 0 ? (
         <Card className="shadow-medium">
@@ -84,6 +90,19 @@ const History = () => {
             const percentage = (attempt.totalObtainedScore / attempt.totalPossibleScore) * 100;
             const passed = percentage >= 60;
 
+            // ✅ Prepare certificate data with correct field names
+            const certificateData = {
+              studentName: student?.name || "Student",
+              quizName: attempt.quizName,
+              teamName: team?.teamName || "Individual",
+              date: new Date(attempt.submittedAt || "").toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }),
+              percentage: percentage.toFixed(1),
+            };
+
             return (
               <Card key={idx} className="shadow-medium hover:shadow-large transition-all">
                 <CardHeader>
@@ -92,13 +111,7 @@ const History = () => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4" />
-                    <span>
-                      {new Date(attempt.submittedAt ?? "").toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
+                    <span>{certificateData.date}</span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -109,7 +122,7 @@ const History = () => {
                       </span>
                     </div>
                     <Badge variant={passed ? 'default' : 'secondary'}>
-                      {percentage.toFixed(1)}%
+                      {certificateData.percentage}%
                     </Badge>
                   </div>
 
@@ -121,14 +134,65 @@ const History = () => {
                     <Eye className="h-4 w-4 mr-2" />
                     View Result
                   </Button>
-                  <Button
-                   
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Download Certificate
-                  </Button>
+
+                  {/* ✅ Certificate Download with correct props */}
+                  {passed && (
+                    <PDFDownloadLink
+                      document={<CertificatePDF certificateData={certificateData} />}
+                      fileName={`${certificateData.studentName.replace(/\s+/g, '_')}_${attempt.quizName.replace(/\s+/g, '_')}_Certificate.pdf`}
+                      className="w-full"
+                    >
+                      {({ loading }) => (
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          disabled={loading}
+                        >
+                          {loading ? (
+                            <>
+                              <svg
+                                className="animate-spin h-4 w-4 mr-2"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-4 w-4 mr-2" />
+                              Download Certificate
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </PDFDownloadLink>
+                  )}
+
+                  {!passed && (
+                    <Button
+                      variant="outline"
+                      className="w-full opacity-50 cursor-not-allowed"
+                      disabled
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Certificate Unavailable
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             );
