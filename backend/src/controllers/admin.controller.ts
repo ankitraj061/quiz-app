@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
-import { TUserLogin } from "../types/auth.types";
+import { TCreateAdmin, TUserLogin } from "../types/auth.types";
 import { AdminRepository } from "../repository/admin.repository";
 import { ApiError } from "../utils/ApiError";
 import { generateToken } from "../utils/jwtUtils";
 import { getCookieOptions } from "../config";
 import { ApiResponse } from "../utils/ApiResponse";
+import { PasswordUtils } from "../utils/password";
 
 
 export class AdminController {
@@ -27,5 +28,16 @@ export class AdminController {
         const token = generateToken({ phoneNumber: admin.phone, userId: admin.id, role: "ADMIN", iat: Math.floor(Date.now() / 1000) });
         res.cookie('token', token, getCookieOptions());
         ApiResponse.success(res, {}, "Log in successful");
+    }
+
+    static async createAdmin(req: Request, res: Response) {
+        const data = req.body as TCreateAdmin;
+        const hashedPassword = await PasswordUtils.hash(data.password);
+
+        const adminCreate = await AdminRepository.create({ ...data, password: hashedPassword }); 
+        if (!adminCreate) {
+            throw new ApiError("Failed to create admin, please try again.");
+        }
+        ApiResponse.success(res, { email: adminCreate.email, password: data.password }, "Admin created successfully.");
     }
 }

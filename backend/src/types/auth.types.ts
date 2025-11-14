@@ -21,17 +21,24 @@ export const ZVerifyOtp = z.object({
 })
 
 export const ZUserLogin = z
-  .object({
-    email: z.string().email("Invalid email format").optional().or(z.literal("")),
-    phone: z.string().regex(/^[0-9]{10}$/, "Phone must be 10 digits").optional().or(z.literal("")),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-  })
-  .refine((data) => data.email || data.phone, {
-    message: "Either email or phone number is required",
-  });
+    .object({
+        email: z.email("Invalid email format").optional().or(z.literal("")),
+        phone: z.string().regex(/^[0-9]{10}$/, "Phone must be 10 digits").optional().or(z.literal("")),
+        password: z.string().min(6, "Password must be at least 6 characters long."),
+    })
+    .refine((data) => data.email || data.phone, {
+        message: "Either email or phone number is required",
+    });
 
-export type TPhone = z.infer<typeof ZPhone>; 
-export type TVerifyOtp = z.infer<typeof ZVerifyOtp>; 
+export const ZCreateAdmin = z.object({
+    email: z.email(),
+    phone: z.string().regex(/^[0-9]{10}$/, "Phone must be 10 digits"),
+    password: z.string().min(6, "Password must be at least 6 characters long."),
+    name: z.string()
+});
+
+export type TPhone = z.infer<typeof ZPhone>;
+export type TVerifyOtp = z.infer<typeof ZVerifyOtp>;
 export type OtpStore = {
     attempts: number,
     otp: string,
@@ -44,5 +51,5 @@ export type JwtPayload = {
     userId: string,
     role: "STUDENT" | "ADMIN"
 };
-
 export type TUserLogin = z.infer<typeof ZUserLogin>;
+export type TCreateAdmin = z.infer<typeof ZCreateAdmin>;

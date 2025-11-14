@@ -21,7 +21,8 @@ class SESMailClient {
                 }
             });
         } catch (error) {
-            logger.error("Failed to intialise SES Mail Client, ", { error });
+            const message = error instanceof Error ? error.message : "Some unknown error.";
+            logger.error("Failed to intialise SES Mail Client, ", { error: message });
         }
     }
 
