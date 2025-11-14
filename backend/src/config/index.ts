@@ -10,7 +10,7 @@ export const config = {
     awsRegion: process.env.AWS_REGION,
     awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
     awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-
+    s3BucketName: process.env.AWS_S3_BUCKET_NAME,
     jwtSecret: process.env.JWT_SECRET || "my-session-secret",
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
     cookieMaxAge: Number(process.env.COOKIE_MAX_AGE),
