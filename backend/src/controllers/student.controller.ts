@@ -3,7 +3,7 @@ import { StudentRepository } from "../repository/student.repository";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { TResendLink, TResponseData, TStudentCreate, TSubmitQuiz } from "../types/student.types";
-import { omit } from "../utils/objectManipilator";
+import { omit } from "../utils/helper";
 import { generateToken } from "../utils/jwtUtils";
 import { getCookieOptions } from "../config";
 import { TUserLogin } from "../types/auth.types";
@@ -14,6 +14,7 @@ import { logger } from "../utils/logger";
 import { PasswordUtils } from "../utils/password";
 import { appEventEmitter, AppEvents } from "../events/eventEmitter";
 import { VerificationTokenRepository } from "../repository/verificationToken.repository";
+import { pushCertificateTask } from "../workers/workerManager";
 
 export class StudentController {
     static createStudent = async (req: Request, res: Response) => {
@@ -108,9 +109,21 @@ export class StudentController {
 
         const { quizId, response, submittedAt } = req.body as TSubmitQuiz;
 
-        const [questions, student] = await Promise.all([QuizRepository.getAllQuestions(quizId), StudentRepository.getById(studentId)]);
+        const [questions, student, quiz] = await Promise.all([
+            QuizRepository.getAllQuestions(quizId), 
+            StudentRepository.getById(studentId),
+            QuizRepository.getById(quizId)
+        ]);
+        if (!quiz) {
+            throw new ApiError("No quiz exits with the given ID.");
+        }
+
         if (!student) {
             throw new ApiError("No student exists.");
+        }
+
+        if (!student.team) {
+            throw new ApiError("Student don't exists in any team, please join the team.");
         }
 
         if (!questions) {
@@ -126,7 +139,7 @@ export class StudentController {
         });
 
         const responseDataOfStudent: TResponseData[] = [];
-        let totalScore = 0;
+        let totalScore = 0, totalPossibleScore = 0;
         questions.forEach((question) => {
             const studentAnswer = studentAnswerMap[question.id];
             const responseData = {
@@ -137,6 +150,7 @@ export class StudentController {
                 score: studentAnswer === question.answer ? question.score : 0
             };
             totalScore += responseData.score;
+            totalPossibleScore += question.score;
             responseDataOfStudent.push(responseData);
         });
 
@@ -150,6 +164,16 @@ export class StudentController {
         if (!quizParticipant) {
             throw new ApiError("Failed to save the response, please try again.");
         }
+        pushCertificateTask({
+            teamName: student.team.teamName ,
+            studentEmail: student.email,
+            completionDate: submittedAt,
+            studentId: student.id,
+            studentName: student.name,
+            quizId: quiz.id,
+            quizTitle: quiz.name,
+            score: totalScore / totalPossibleScore * 100
+        });
 
         ApiResponse.success(res, {
             totalScore,

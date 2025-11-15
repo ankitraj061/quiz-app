@@ -6,6 +6,7 @@ import {
 import { config } from "../config";
 import { logger } from "../utils/logger";
 import fs from "fs";
+import { Readable } from "stream";
 
 class S3Service {
     private static instance: S3Service;
@@ -36,25 +37,23 @@ class S3Service {
         return this.instance;
     }
 
-    static async uploadToS3(localFilePath: string, key: string) {
-        const service = this.getInstance();
-        if (!service.s3Service) {
-            service.initialiseS3Service();
+    async uploadToS3(fileStream: Buffer, key: string) {
+        if (!this.s3Service) {
+            this.initialiseS3Service();
         }
-        if (!service.s3Service) {
+        if (!this.s3Service) {
             throw new Error("S3 client is not initialised");
         }
-        const fileStream = fs.createReadStream(localFilePath);
 
         const uploadParams: PutObjectCommandInput = {
             Bucket: config.s3BucketName,
             Key: key,
             Body: fileStream,
             ContentType: "application/pdf",
-            ACL: "public-read",
+            // ACL: "public-read",
         };
 
-        await service.s3Service.send(new PutObjectCommand(uploadParams));
+        await this.s3Service.send(new PutObjectCommand(uploadParams));
 
         return `https://${config.s3BucketName}.s3.amazonaws.com/${key}`;
     }

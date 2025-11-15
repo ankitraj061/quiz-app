@@ -23,7 +23,18 @@ export class StudentRepository {
         return prisma.student.findUnique({ where: { email } });
     }
     static getById = async (id: string) => {
-        return prisma.student.findUnique({ where: { id } });
+        return prisma.student.findUnique({ 
+            where: { 
+                id 
+            },
+            select: {
+                id: true, name: true, email: true, teamId: true, isTeamLeader: true, team: {
+                    select: { 
+                        teamName: true
+                    }
+                }
+            }
+        });
     }
     static getTeamByStudentId = async (id: string | null | undefined) => {
         if (!id) {
@@ -61,6 +72,21 @@ export class StudentRepository {
         return prisma.student.updateMany({
             where: { teamId: teamId },
             data: { isVerified: true }
+        });
+    }
+
+    static async markCertificateAsGenerated(studentId: string, quizId: string, pdfUrl: string) {
+        return await prisma.quizParticipant.update({
+            where: {
+                quizId_studentId: {
+                    quizId, studentId
+                }
+            },
+            data: {
+                certificateGenerated: true,
+                certificateSent: true,
+                pdfUrl
+            }
         });
     }
 }

@@ -10,8 +10,10 @@ import { router } from "./routes";
 
 import './events/listeners/studentListeners';
 import { logger } from "./utils/logger";
+import { startWorkers } from "./workers/workerManager";
 
 logger.info("Student events registered.");
+startWorkers();
 
 app.use("/api/v1", router);
 

@@ -4,7 +4,7 @@ import { QuizRepository } from "../repository/quiz.repository";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { HTTP_STATUS } from "../utils/httpCodes";
-import { verifyUUID } from "../utils/objectManipilator";
+import { verifyUUID } from "../utils/helper";
 
 export class QuizController {
     static getUserId(req: Request) {

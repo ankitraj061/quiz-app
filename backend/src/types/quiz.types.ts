@@ -48,3 +48,14 @@ export type TCreateQuestion = z.infer<typeof ZCreateQuestion>;
 export type TQuestionUpdate = z.infer<typeof ZQuestionUpdate>;
 export type TQuizUpdate = z.infer<typeof ZQuizUpdate>;
 export type Question = z.infer<typeof Question>;
+
+export type CertificateGeneratorPayload = {
+    teamName: string;
+    studentName: string;
+    completionDate: string;
+    quizTitle: string;
+    score: number;
+    studentEmail: string;
+    studentId: string;
+    quizId: string;
+}

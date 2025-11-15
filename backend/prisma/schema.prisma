@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      =  env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Student {
@@ -119,6 +119,7 @@ model QuizParticipant {
   totalScore  Int       @default(0)
   submittedAt DateTime?
 
+  pdfUrl               String?
   certificateGenerated Boolean  @default(false)
   certificateSent      Boolean  @default(false)
   createdAt            DateTime @default(now()) @db.Timestamptz(6)

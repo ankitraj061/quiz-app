@@ -54,3 +54,13 @@ export function verifyUUID(value: string) {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(value);
 }
+
+export function sanitizeS3KeySegment(str: string): string {
+    return str
+        .trim()
+        .normalize('NFD') // split accented characters (e.g., café → cafe + ´)
+        .replace(/[\u0300-\u036f]/g, '') // remove accent marks
+        .replace(/[^a-zA-Z0-9._\- ]/g, '') // remove unsafe chars
+        .replace(/\s+/g, '-') // replace spaces (and multiple spaces) with hyphens
+        .toLowerCase();
+}
