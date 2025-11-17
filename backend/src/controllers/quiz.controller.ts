@@ -22,15 +22,19 @@ export class QuizController {
         if (!data) {
             throw new ApiError("Failed to create quiz, please try again");
         }
-        let numberOfQuestionsCreated;
+        let numberOfQuestionsCreated = 0;
 
-        if (questions) {
+        if (questions && questions.length > 0) {
             const createdQuestions = await QuizRepository.createQuestion(questions, data.id);
             numberOfQuestionsCreated = createdQuestions.count;
         }
 
-        ApiResponse.success(res, { ...data, ...(numberOfQuestionsCreated ? { numberOfQuestionsCreated }:{}) }, "Quiz created successfully", HTTP_STATUS.CREATED);
+        ApiResponse.success(res, { 
+            ...data, 
+            ...(numberOfQuestionsCreated ? { numberOfQuestionsCreated }:{}) 
+        }, "Quiz created successfully", HTTP_STATUS.CREATED);
     }
+
     static async getAllQuiz(req: Request, res: Response) {
         const createdBy = QuizController.getUserId(req);
         const data = await QuizRepository.getAllByCreatedBy(createdBy);
@@ -43,12 +47,12 @@ export class QuizController {
     static async getCompleteQuiz(req: Request, res: Response) {
         let quizId = req.params.quizId as string;
         
-        if (!quizId) {
-            throw new ApiError("Np quiz id is provided");
+        if (!verifyUUID(quizId)) {
+            throw new ApiError("Invalid Quiz Id is provided.", HTTP_STATUS.BAD_REQUEST);
         }
         const data = await QuizRepository.getCompleteQuizById(quizId);
         if (!data) {
-            throw new ApiError("Failed to get the quiz or there is no quiz with given id.");
+            throw new ApiError("No quiz exists with given ID.");
         }
         
         ApiResponse.success(res, data, "Successfully fetched detailed quiz data.");
@@ -57,31 +61,37 @@ export class QuizController {
     static async updateQuiz(req: Request, res: Response) {
         let quizId = req.params.quizId as string;
         
-        if (!quizId) {
-            throw new ApiError("Np quiz id is provided");
+        if (!verifyUUID(quizId)) {
+            throw new ApiError("Invalid Quiz Id is provided.", HTTP_STATUS.BAD_REQUEST);
         }
-        const updatedQuiz = await QuizRepository.updateQuizById(quizId, req.body as TQuizUpdate);
+
+        const updatedQuiz = await QuizRepository.updateQuizById(quizId, req.body as TQuizUpdate);        
+        
         if (!updatedQuiz) {
             throw new ApiError("Failed to update quiz, please try again.");
         }        
 
         ApiResponse.success(res, updatedQuiz, "Updated quiz successfully.");
     }
+
     static async deleteQuiz(req: Request, res: Response) {
         let quizId = req.params.quizId as string;
         
-        if (!quizId) {
-            throw new ApiError("Np quiz id is provided");
+        if (!verifyUUID(quizId)) {
+            throw new ApiError("Invalid Quiz Id is provided.", HTTP_STATUS.BAD_REQUEST);
         }
+
         const createdBy = QuizController.getUserId(req);
         const quiz = await QuizRepository.getById(quizId);
         if (!quiz) {
             throw new ApiError("No quiz exists with provided ID.", HTTP_STATUS.BAD_REQUEST);
         }
+
         if (quiz.createdBy !== createdBy) {
             throw new ApiError("Unauthorised access, you are not the creator of the quiz.", HTTP_STATUS.FORBIDDEN);
         }
         const deletedQuiz = await QuizRepository.deleteById(quizId);
+        
         ApiResponse.success(res, deletedQuiz, "Quiz deleted successfully", HTTP_STATUS.OK);
     }
 
@@ -141,6 +151,9 @@ export class QuizController {
         const [participants, questions] = await Promise.all([QuizRepository.getLeaderboard(quizId), QuizRepository.getAllQuestions(quizId)]);
         if (!participants) {
             throw new ApiError("Failed to load participants data.");
+        }
+        if (!questions || questions.length === 0) {
+            throw new ApiError("No questions found with given ID.");
         }
         
         let totalMarks = 0;

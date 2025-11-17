@@ -3,7 +3,7 @@ import { StudentRepository } from "../repository/student.repository";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { TResendLink, TResponseData, TStudentCreate, TSubmitQuiz } from "../types/student.types";
-import { omit } from "../utils/helper";
+import { omit, verifyUUID } from "../utils/helper";
 import { generateToken } from "../utils/jwtUtils";
 import { getCookieOptions } from "../config";
 import { TUserLogin } from "../types/auth.types";
@@ -28,21 +28,11 @@ export class StudentController {
             throw new ApiError("Only one student can be leader.");
         }
 
-        const team = await StudentRepository.createTeam(omit(data, ["students", "password"]));
-        if (!team) {
-            throw new ApiError("Failed to create team, please try again.");
-        }
         const hashedPassword = await PasswordUtils.hash(data.password);
 
-        const createdStudent = await StudentRepository.create(data.students.map((student) => ({
-            ...student, teamId: team.id
-        })), hashedPassword);
+        const result = await StudentRepository.creatTeamWithStudents(omit(data, ["password", "students"]), data.students, hashedPassword);
 
-        if (!createdStudent) {
-            throw new ApiError("Failed to register, please try again");
-        }
-
-        const createdTeam = await StudentRepository.getTeamById(team.id);
+        const createdTeam = await StudentRepository.getTeamById(result.team.id);
         const teamLeader = createdTeam.filter(stud => stud.isTeamLeader);
 
         // send verification link to only leader
@@ -58,7 +48,7 @@ export class StudentController {
             leaderName: teamLeader[0].name
         });
 
-        ApiResponse.success(res, { team, studentAdded: createdStudent.count }, "Successfully created student.");
+        ApiResponse.success(res, { team: result.team, studentAdded: result.createdStudents.count }, "Successfully created student.");
     }
 
     static loginStudent = async (req: Request, res: Response) => {
@@ -97,6 +87,9 @@ export class StudentController {
 
     static async getQuizDetail(req: Request, res: Response) {
         const quizId = req.params.quizId as string;
+        if (!verifyUUID(quizId)) {
+            throw new ApiError("Please provide valid quiz ID");
+        }
         const data = await QuizRepository.getByIdForStudent(quizId);
         if (!data) {
             throw new ApiError("No quiz exists with provided id, please send correct id.");
@@ -154,16 +147,10 @@ export class StudentController {
             responseDataOfStudent.push(responseData);
         });
 
-        const createdStudentResponse = await StudentRepository.saveStudentResponse(responseDataOfStudent);
+        const result = await StudentRepository.saveResponseAndAddParticipant(
+            responseDataOfStudent, quizId, student.teamId, student.id, totalScore, submittedAt
+        );
 
-        if (createdStudentResponse.count !== response.length) {
-            logger.error("Not all student response saved.");
-            throw new ApiError("Failed to save all the question response.");
-        }
-        const quizParticipant = await StudentRepository.addParticipant(quizId, student.teamId, student.id, totalScore, submittedAt);
-        if (!quizParticipant) {
-            throw new ApiError("Failed to save the response, please try again.");
-        }
         pushCertificateTask({
             teamName: student.team.teamName ,
             studentEmail: student.email,

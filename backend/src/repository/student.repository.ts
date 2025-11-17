@@ -23,13 +23,13 @@ export class StudentRepository {
         return prisma.student.findUnique({ where: { email } });
     }
     static getById = async (id: string) => {
-        return prisma.student.findUnique({ 
-            where: { 
-                id 
+        return prisma.student.findUnique({
+            where: {
+                id
             },
             select: {
                 id: true, name: true, email: true, teamId: true, isTeamLeader: true, team: {
-                    select: { 
+                    select: {
                         teamName: true
                     }
                 }
@@ -86,6 +86,61 @@ export class StudentRepository {
                 certificateGenerated: true,
                 certificateSent: true,
                 pdfUrl
+            }
+        });
+    }
+
+    static async creatTeamWithStudents(
+        teamData: Omit<Omit<TStudentCreate, "students">, "password">,
+        students: TStudent[],
+        hashedPassword: string
+    ) {
+        return prisma.$transaction(async (tx) => {
+            const team = await tx.team.create({
+                data: teamData
+            });
+
+            const createdStudents = await tx.student.createMany({
+                data: students.map((stud) => ({
+                    ...stud,
+                    teamId: team.id,
+                    password: hashedPassword
+                }))
+            });
+
+            const createdTeam = await tx.student.findMany({
+                where: {
+                    teamId: team.id
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    phone: true,
+                    teamId: true,
+                    isTeamLeader: true
+                }
+            });
+            return {
+                team, createdStudents, createdTeam
+            };
+        });
+    }
+
+    static async saveResponseAndAddParticipant(responseDataOfStudent: TResponseData[], quizId: string, teamId: string | null, studentId: string, totalScore: number, submittedAt: string) {
+        return prisma.$transaction(async (tx) => {
+            const createdStudentResponse = await prisma.studentResponse.createMany({
+                data: responseDataOfStudent
+            });
+
+            const quizParticipant = await prisma.quizParticipant.create({
+                data: {
+                    quizId, teamId, studentId, totalScore, submittedAt
+                }
+            });
+
+            return {
+                createdStudentResponse, quizParticipant
             }
         });
     }

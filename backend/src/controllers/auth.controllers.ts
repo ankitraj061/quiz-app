@@ -81,7 +81,6 @@ export class AuthController {
         if (!user) {
             throw new ApiError("Authentication Error");
         }
-        logger.info("User ", user);
         let userData;
         let studentTeam;
         if (user.role === "STUDENT") {
@@ -94,6 +93,6 @@ export class AuthController {
             throw new ApiError("No user found");
         }
       
-        ApiResponse.success(res, { userData, team: studentTeam}, "Profile retrieved successfully.");
+        ApiResponse.success(res, { userData, team: studentTeam, role: user.role }, "Profile retrieved successfully.");
     }
 } 

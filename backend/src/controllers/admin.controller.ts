@@ -6,6 +6,7 @@ import { generateToken } from "../utils/jwtUtils";
 import { getCookieOptions } from "../config";
 import { ApiResponse } from "../utils/ApiResponse";
 import { PasswordUtils } from "../utils/password";
+import { HTTP_STATUS } from "../utils/httpCodes";
 
 
 export class AdminController {
@@ -20,12 +21,18 @@ export class AdminController {
         }
 
         if (!admin) {
-            throw new ApiError("Invalid email or phone number, admin doesn't exist.");
+            throw new ApiError("Invalid email or phone number, admin doesn't exist.", HTTP_STATUS.BAD_REQUEST);
         }
-        if (data.password !== admin.password) {
+        const passwordComparison = await PasswordUtils.compare(data.password, admin.password);
+        if (!passwordComparison) {
             throw new Error("Password not matched, pleae enter correct password");
         }
-        const token = generateToken({ phoneNumber: admin.phone, userId: admin.id, role: "ADMIN", iat: Math.floor(Date.now() / 1000) });
+        const token = generateToken({ 
+            phoneNumber: admin.phone, 
+            userId: admin.id, 
+            role: "ADMIN", 
+            iat: Math.floor(Date.now() / 1000) 
+        });
         res.cookie('token', token, getCookieOptions());
         ApiResponse.success(res, {}, "Log in successful");
     }
