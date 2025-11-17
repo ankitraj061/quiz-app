@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { StudentController } from "../controllers/student.controller";
 import { authenticateToken } from "../middlewares/auth.middleware";
 import { ZUserLogin } from "../types/auth.types";
+import { roleRequired } from "../middlewares/requiredRole.middleware";
 
 const router = Router();
 
@@ -15,19 +16,19 @@ router.route("/auth/login")
     .post(validate(ZUserLogin), asyncHandler(StudentController.loginStudent));
 
 router.route("/quiz")
-    .get(authenticateToken, asyncHandler(StudentController.getQuizForStudents));
+    .get(authenticateToken, roleRequired("STUDENT"), asyncHandler(StudentController.getQuizForStudents));
 
 router.route("/quiz/submit")
-    .post(authenticateToken, asyncHandler(StudentController.submitQuiz));
+    .post(authenticateToken, roleRequired("STUDENT"), asyncHandler(StudentController.submitQuiz));
 
 router.route("/quiz-response")
-    .get(authenticateToken, asyncHandler(StudentController.getAllQuizResponse));
+    .get(authenticateToken, roleRequired("STUDENT"), asyncHandler(StudentController.getAllQuizResponse));
 
 router.route("/quiz-detail/:quizId")
-    .get(authenticateToken, asyncHandler(StudentController.getQuizDetail));
+    .get(authenticateToken, roleRequired("STUDENT"), asyncHandler(StudentController.getQuizDetail));
 
 router.route("/quiz-response/:quizId")
-    .get(authenticateToken, asyncHandler(StudentController.getQuizResponse));
+    .get(authenticateToken,  roleRequired("STUDENT"), asyncHandler(StudentController.getQuizResponse));
 
 router.route('/verify-email')
     .get(asyncHandler(StudentController.verifyEmail));

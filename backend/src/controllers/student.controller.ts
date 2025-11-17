@@ -165,7 +165,7 @@ export class StudentController {
         ApiResponse.success(res, {
             totalScore,
             response: responseDataOfStudent.map(res => ({ ...res, studentId: undefined }))
-        })
+        });
     }
 
     static async getQuizResponse(req: Request, res: Response) {
@@ -253,7 +253,6 @@ export class StudentController {
         if (!verificationToken) {
             throw new ApiError("Invalid or expired verification token");
         }
-        logger.info("Verification token find ", { verificationToken });
 
         if (!verificationToken.student.teamId) {
             throw new ApiError("No Team exists, please join some team.");
@@ -263,7 +262,7 @@ export class StudentController {
         logger.info("Token Verified");
 
         // Update student as verified
-        StudentRepository.markTeamAsVerified(verificationToken.student.teamId);
+        await StudentRepository.markTeamAsVerified(verificationToken.student.teamId);
         logger.info("All team members marked as verified.");
 
         ApiResponse.success(res, null, "Email verified successfully");
@@ -282,10 +281,10 @@ export class StudentController {
             throw new ApiError("Only leader can request to resend the link, please contact leader of your team.");
         }
         const team = await StudentRepository.getTeamById(student.teamId);
-        console.log(team);
+   
         
         const teamDetail = await StudentRepository.getTeamByStudentId(student.teamId);
-        console.log(teamDetail);
+
         if (!team || !teamDetail) {
             throw new ApiError("No team found.");
         }
