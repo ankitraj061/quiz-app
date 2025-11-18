@@ -81,7 +81,8 @@ export const storage = {
             answer: 1
           }
         ],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        participants: []
       };
       
       storage.saveQuiz(demoQuiz);

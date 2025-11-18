@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Save } from 'lucide-react';
+import { Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,35 +17,32 @@ import { Question } from '@/types/quiz';
 export default function CreateQuiz() {
   const router = useRouter();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [duration, setDuration] = useState(30);
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [duration, setDuration] = useState<number>(30);
   const [questions, setQuestions] = useState<Question[]>([
     { id: crypto.randomUUID(), statement: '', options: ['', '', '', ''], answer: 0 }
   ]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const addQuestion = () => {
+  const addQuestion = (): void => {
     setQuestions([
       ...questions,
       { id: crypto.randomUUID(), statement: '', options: ['', '', '', ''], answer: 0 }
     ]);
   };
 
-  const removeQuestion = (id: string | undefined) => {
-    if (!id) return;
+  const removeQuestion = (id: string): void => {
     if (questions.length > 1) {
       setQuestions(questions.filter(q => q.id !== id));
     }
   };
 
-  const updateQuestion = (id: string | undefined, field: keyof Question, value: any) => {
-    if (!id) return;
+  const updateQuestion = (id: string, field: keyof Question, value: string | number): void => {
     setQuestions(questions.map(q => q.id === id ? { ...q, [field]: value } : q));
   };
 
-  const updateOption = (questionId: string | undefined, optionIndex: number, value: string) => {
-    if (!questionId) return;
+  const updateOption = (questionId: string, optionIndex: number, value: string): void => {
     setQuestions(questions.map(q => {
       if (q.id === questionId) {
         const newOptions = [...q.options];
@@ -56,7 +53,7 @@ export default function CreateQuiz() {
     }));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!title.trim()) {
       toast.error('Please enter a quiz title');
       return;
@@ -68,12 +65,15 @@ export default function CreateQuiz() {
       return;
     }
 
+    setIsLoading(true);
+
     const quiz = {
       id: crypto.randomUUID(),
       name: title,
       description,
       duration,
       questions,
+      participants: [],
       createdAt: new Date().toISOString()
     };
 
@@ -96,19 +96,18 @@ export default function CreateQuiz() {
         }
       } else {
         toast.error('An unexpected error occurred. Please try again.');
-        console.error('Registration error:', error);
+        console.error('Quiz creation error:', error);
       }
     } finally {
       setIsLoading(false);
     }
-
   };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto p-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 bg-liner-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-2 bg-liner-to-r from-primary to-accent text-black">
             Create New Quiz
           </h1>
           <p className="text-muted-foreground">
@@ -129,6 +128,7 @@ export default function CreateQuiz() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="mt-1"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -139,6 +139,7 @@ export default function CreateQuiz() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="mt-1"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -150,6 +151,7 @@ export default function CreateQuiz() {
                 value={duration}
                 onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
                 className="mt-1"
+                disabled={isLoading}
               />
             </div>
           </CardContent>
@@ -164,8 +166,9 @@ export default function CreateQuiz() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeQuestion(question.id)}
+                    onClick={() => removeQuestion(question.id as string)}
                     className="text-destructive"
+                    disabled={isLoading}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -177,8 +180,9 @@ export default function CreateQuiz() {
                   <Input
                     placeholder="Enter your question"
                     value={question.statement}
-                    onChange={(e) => updateQuestion(question.id, 'statement', e.target.value)}
+                    onChange={(e) => updateQuestion(question.id as string, 'statement', e.target.value)}
                     className="mt-1"
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -186,17 +190,22 @@ export default function CreateQuiz() {
                   <Label>Options *</Label>
                   <RadioGroup
                     value={question.answer.toString()}
-                    onValueChange={(value) => updateQuestion(question.id, 'answer', parseInt(value))}
+                    onValueChange={(value) => updateQuestion(question.id as string, 'answer', parseInt(value))}
                   >
                     <div className="space-y-3 mt-2">
                       {question.options.map((option, oIndex) => (
                         <div key={oIndex} className="flex items-center gap-3">
-                          <RadioGroupItem value={oIndex.toString()} id={`q${qIndex}-o${oIndex}`} />
+                          <RadioGroupItem 
+                            value={oIndex.toString()} 
+                            id={`q${qIndex}-o${oIndex}`}
+                            disabled={isLoading}
+                          />
                           <Input
                             placeholder={`Option ${oIndex + 1}`}
                             value={option}
-                            onChange={(e) => updateOption(question.id, oIndex, e.target.value)}
+                            onChange={(e) => updateOption(question.id as string, oIndex, e.target.value)}
                             className="flex-1"
+                            disabled={isLoading}
                           />
                         </div>
                       ))}
@@ -210,14 +219,33 @@ export default function CreateQuiz() {
         </div>
 
         <div className="flex gap-4 mt-6">
-          <Button onClick={addQuestion} variant="outline" className="flex items-center gap-2">
+          <Button 
+            onClick={addQuestion} 
+            variant="outline" 
+            className="flex items-center gap-2"
+            disabled={isLoading}
+          >
             <Plus className="w-4 h-4" />
             Add Question
           </Button>
-          <Button onClick={handleSave} className="flex items-center gap-2 ml-auto" disabled={isLoading}>
-            <Save className="w-4 h-4" />
-            Save Quiz
+          <Button 
+            onClick={handleSave} 
+            className="flex items-center gap-2 ml-auto" 
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Quiz
+              </>
+            )}
           </Button>
+          
         </div>
       </div>
     </div>

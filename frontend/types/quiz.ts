@@ -1,3 +1,5 @@
+import { Applicant } from "@/app/admin/components/storage";
+
 export interface Question {
   id?: string;
   statement: string;
@@ -11,7 +13,11 @@ export interface Quiz {
   description: string;
   duration: number;
   questions: Question[];
+  participants:Participants[];
   createdAt: string;
+}
+interface Participants {
+  id: string;
 }
 
 export type QuestionResponse = {

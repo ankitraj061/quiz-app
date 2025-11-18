@@ -3,11 +3,14 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { config } from '@/lib/utils';
 
-interface Student {
+interface User {
   id: string;
   name: string;
   email: string;
   phone: string;
+  role: 'STUDENT' | 'ADMIN';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Team {
@@ -16,7 +19,7 @@ interface Team {
 }
 
 interface AuthContextType {
-  student: Student | null;
+  user: User | null;
   team: Team | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -27,51 +30,48 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [student, setStudent] = useState<Student | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Wrap checkAuth with useCallback to prevent infinite loops
   const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log("Checking auth");
       
       const response = await fetch(`${config.backendUrl}/api/v1/auth/me`, {
         method: 'GET',
         credentials: 'include',
       });
       
-      console.log("Auth response:", response.status);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log("Auth data:", data);
-        setStudent(data.data.userData);
-        setTeam(data.data.team);
+        const userData = {
+          ...data.data.userData,
+          role: data.data.role  
+        };
+        
+        setUser(userData);
+        setTeam(data.data.team || null);
       } else {
-        // Not authenticated
-        console.log("Not authenticated");
-        setStudent(null);
+        setUser(null);
         setTeam(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      setStudent(null);
+      setUser(null);
       setTeam(null);
     } finally {
       setIsLoading(false);
     }
-  }, []); // Empty dependency array since it doesn't depend on any state
+  }, []);
 
   // Check authentication status on mount
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]); // Now safe to include checkAuth in dependencies
+  }, [checkAuth]);
 
   const logout = async () => {
     try {
-      // Call logout endpoint to clear cookie
       await fetch(`${config.backendUrl}/api/v1/auth/logout`, {
         method: 'GET',
         credentials: 'include',
@@ -79,22 +79,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
-      setStudent(null);
+      setUser(null);
       setTeam(null);
     }
   };
 
+  // Create stable context value
+  const contextValue = {
+    user,
+    team,
+    isAuthenticated: !!user,
+    isLoading,
+    logout,
+    checkAuth
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        student,
-        team,
-        isAuthenticated: !!student,
-        isLoading,
-        logout,
-        checkAuth
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

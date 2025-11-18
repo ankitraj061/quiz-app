@@ -65,7 +65,7 @@ export default function QuizCard({ quiz, applicantCount, onDelete }: QuizCardPro
               variant="ghost"
               size="icon"
               onClick={() => router.push(`/admin/edit/${quiz.id}`)}
-              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-8 w-8 transition-colors"
               title="Edit quiz"
             >
               <Edit className="h-4 w-4" />
@@ -75,7 +75,7 @@ export default function QuizCard({ quiz, applicantCount, onDelete }: QuizCardPro
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
                   title="Delete quiz"
                 >
                   <Trash2 className="h-4 w-4" />

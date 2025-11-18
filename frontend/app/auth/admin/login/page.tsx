@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { loginAdmin } from '@/app/lib/adminApi';
 import { ApiError } from '@/app/lib/apiError';
@@ -15,21 +15,23 @@ import { ApiError } from '@/app/lib/apiError';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, checkAuth, user, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!authLoading && isAuthenticated && user?.role === 'ADMIN') {
       router.push('/admin/dashboard');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!email || !password) {
       toast.error('Please enter both email and password');
+      setIsLoading(false);
       return;
     }
 
@@ -38,14 +40,17 @@ const Login = () => {
 
       if (res) {
         toast.success('Login successful!');
-        setTimeout(() => {
-          router.push('/admin/dashboard');
-        }, 1000);
+        
+        await checkAuth();
+        
+        setIsLoading(false);
       } else {
         toast.error('Invalid credentials. Please check your email/phone and password.');
+        setIsLoading(false);
       }
 
     } catch (error) {
+      console.error('Login error:', error);
       if (error instanceof ApiError) {
         toast.error(error.message);
         if (error.errors && error.errors.length > 0) {
@@ -57,7 +62,6 @@ const Login = () => {
         toast.error('An unexpected error occurred. Please try again.');
         console.error('Registration error:', error);
       }
-    } finally {
       setIsLoading(false);
     }
   };
@@ -89,6 +93,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -100,10 +105,18 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              Sign In
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
             </Button>
           </form>
         </CardContent>

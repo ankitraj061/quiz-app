@@ -5,17 +5,37 @@ import Link from 'next/link';
 import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import QuizCard from '../components/QuizCard';
-import { storage } from '../components/storage';
 import { Quiz } from '@/types/quiz';
 import { getQuizOfAdmin } from '@/app/lib/quizApi';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/app/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, user, isLoading } = useAuth();
+  const router = useRouter();
+
+  // Auth protection - redirect if not admin
+  useEffect(() => {
+
+    // Wait for auth to load before making decisions
+    if (!isLoading) {
+      // Redirect if not authenticated OR not an admin
+      if (!isAuthenticated || user?.role !== 'ADMIN') {
+        router.push('/auth/admin/login');
+      } else {
+      }
+    }
+  }, [isLoading, isAuthenticated, user, router]);
 
   const fetchQuizData = useCallback(async () => {
+    if (!isAuthenticated || user?.role !== 'ADMIN') {
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -32,19 +52,32 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, user]);
 
+  // Fetch quizzes when authenticated as admin
   useEffect(() => {
-    fetchQuizData();
-  }, [fetchQuizData]);
-
-  const getApplicantCount = (quizId: string) => {
-    return storage.getApplicantsByQuizId(quizId).length;
-  };
+    if (!isLoading && isAuthenticated && user?.role === 'ADMIN') {
+      fetchQuizData();
+    } 
+  }, [isLoading, isAuthenticated, user, fetchQuizData]);
 
   const handleRetry = () => {
     fetchQuizData();
   };
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Don't render dashboard if not authorized
+  if (!isAuthenticated || user?.role !== 'ADMIN') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,8 +151,8 @@ export default function Dashboard() {
               <QuizCard
                 key={quiz.id}
                 quiz={quiz}
-                applicantCount={getApplicantCount(quiz.id)}
-                onDelete={() => fetchQuizData()} // Refresh after delete
+                applicantCount={quiz.participants.length}
+                onDelete={() => fetchQuizData()}
               />
             ))}
           </div>

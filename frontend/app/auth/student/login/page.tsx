@@ -52,13 +52,13 @@ const Login = () => {
   const [resendEmail, setResendEmail] = useState('');
   const [isResending, setIsResending] = useState(false);
 
-  const { isAuthenticated, checkAuth } = useAuth();
+  const { isAuthenticated, checkAuth, user, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!authLoading && isAuthenticated && user?.role === 'STUDENT') {
       router.replace('/student/dashboard');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,20 +76,21 @@ const Login = () => {
     
     try {
       setIsLoading(true);
+      
       const success = await loginStudent(data);
       
       if (success) {
         toast.success('Login successful!');
         
-        // Immediately refresh auth state
         await checkAuth();
         
-        // Use replace to prevent back button issues
-        router.replace('/student/dashboard');
+        setIsLoading(false);
       } else {
         toast.error('Invalid credentials. Please check your email/phone and password.');
+        setIsLoading(false);
       }
     } catch (error) {
+      console.error('Student login error:', error);
       if (error instanceof ApiError) {
         toast.error(error.message);
         if (error.errors && error.errors.length > 0) {
@@ -101,7 +102,6 @@ const Login = () => {
         toast.error('An unexpected error occurred. Please try again.');
         console.error('Login error:', error);
       }
-    } finally {
       setIsLoading(false);
     }
   };

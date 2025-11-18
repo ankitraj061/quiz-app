@@ -2,9 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, PlusCircle, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, FileText, LogOut, UserPlus } from 'lucide-react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const Sidebar = () => {
   const { logout } = useAuth();
@@ -21,7 +32,7 @@ const Sidebar = () => {
       href: '/admin/create',
       icon: PlusCircle,
       label: 'Create Quiz'
-    }
+    },
   ];
 
   const handleLogout = () => {
@@ -33,11 +44,11 @@ const Sidebar = () => {
     <aside className="w-64 min-h-screen bg-card border-r border-border flex flex-col">
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
             <FileText className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold text-primary">
               QuizMaster
             </h1>
             <p className="text-xs text-muted-foreground">Admin Portal</p>
@@ -69,15 +80,45 @@ const Sidebar = () => {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-2">
+        {/* Add Admin Button */}
         <Button
+          asChild
           variant="ghost"
-          onClick={handleLogout}
           className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-secondary/50"
         >
-          <LogOut className="w-5 h-5" />
-          <span>Logout</span>
+          <Link href="/admin/add-admin">
+            <UserPlus className="w-5 h-5" />
+            <span>Add Admin</span>
+          </Link>
         </Button>
+
+        {/* Logout Button */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Logout</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will end your current session and you&apos;ll need to login again to access the admin portal.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleLogout}>
+                Yes, Logout
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </aside>
   );

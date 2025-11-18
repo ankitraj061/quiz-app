@@ -14,6 +14,17 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Question } from '@/types/quiz';
 import { getQuiz, updateQuiz } from '@/app/lib/quizApi';
 import { ApiError } from '@/app/lib/apiError';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function EditQuiz() {
   const router = useRouter();
@@ -80,7 +91,7 @@ export default function EditQuiz() {
     }
   };
 
-  const updateQuestion = (questionId: string | undefined, field: keyof Question, value: any) => {
+  const updateQuestion = (questionId: string | undefined, field: keyof Question, value: string | number | string[]) => {
     if (!questionId) return;
     setQuestions(questions.map(q =>
       q.id === questionId ? { ...q, [field]: value } : q
@@ -119,7 +130,6 @@ export default function EditQuiz() {
       return;
     }
     console.log(questions);
-    
 
     const quiz = {
       id,
@@ -131,8 +141,10 @@ export default function EditQuiz() {
         // Remove temporary client IDs for new questions
         id: ques.id?.startsWith('temp-') ? undefined : ques.id
       })),
+      participants: [],
       createdAt: storage.getQuizById(id)?.createdAt || new Date().toISOString()
     };
+
 
     try {
       setSaving(true);
@@ -247,14 +259,34 @@ export default function EditQuiz() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">Question {qIndex + 1}</CardTitle>
                 {questions.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeQuestion(question.id)}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Question</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete Question {qIndex + 1}? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => removeQuestion(question.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </CardHeader>
               <CardContent className="space-y-4">
