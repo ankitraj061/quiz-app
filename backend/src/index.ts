@@ -5,7 +5,6 @@ dotenv.config();
 
 import { config } from "./config";
 
-
 import { router } from "./routes";
 
 import './events/listeners/studentListeners';

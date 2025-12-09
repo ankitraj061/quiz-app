@@ -15,7 +15,7 @@ router.route("/verify-otp")
 
 router.route("/logout")
     .get(asyncHandler(AuthController.logout));
-    
+
 router.route("/me")
     .get(authenticateToken, asyncHandler(AuthController.getCurrentUser));
 

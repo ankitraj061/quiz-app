@@ -4,6 +4,7 @@ export const appEventEmitter = new EventEmitter();
 
 // Event types
 export enum AppEvents {
-    STUDENT_REGISTERED = 'student:registered',
-    SEND_EMAIL_VERIFICATION = 'email:verification:sent',
+  STUDENT_REGISTERED = "student:registered",
+  SEND_EMAIL_VERIFICATION = "email:verification:sent",
+  SEND_PASSWORD_RESET_EMAIL = "email:password-reset:sent",
 }
