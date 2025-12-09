@@ -1,99 +1,179 @@
-import { Student } from "@prisma/client";
+// Use a minimal local Student shape to avoid depending on generated Prisma types here
+interface Student {
+  id: string;
+  name: string;
+  email: string;
+  isTeamLeader?: boolean;
+  teamId?: string | null;
+}
 import { VerificationTokenRepository } from "../../repository/verificationToken.repository";
 import { mailClient } from "../../services/ses.service";
 import { logger } from "../../utils/logger";
 import { appEventEmitter, AppEvents } from "../eventEmitter";
 import { config } from "../../config";
-import { getVerficationMailTemplate, getWelcomeMailTemplate } from "../../templates/email.templates";
-
-
+import {
+  getVerficationMailTemplate,
+  getWelcomeMailTemplate,
+  getPasswordResetMailTemplate,
+} from "../../templates/email.templates";
 
 interface StudentWelcomePayload {
-    teamName: string;
-    leaderName: string; 
-    students: Student[]
+  teamName: string;
+  leaderName: string;
+  students: Student[];
 }
 
 interface VerificationLinkPayload {
-    teamName: string;
-    leader: Student
+  teamName: string;
+  leader: Student;
+}
+
+interface PasswordResetPayload {
+  student: Student;
+  resetToken: {
+    token: string;
+  };
 }
 
 // Event Listener for student upon registration
-appEventEmitter.on(AppEvents.STUDENT_REGISTERED, async (payload: StudentWelcomePayload) => {
+appEventEmitter.on(
+  AppEvents.STUDENT_REGISTERED,
+  async (payload: StudentWelcomePayload) => {
     try {
-        console.log('Student registered event received:', payload);
+      console.log("Student registered event received:", payload);
 
-        const sendEmailPromises: Promise<void>[] = [];
-        // Send verification email to each student
-        for (const student of payload.students) {
+      const sendEmailPromises: Promise<void>[] = [];
+      // Send verification email to each student
+      for (const student of payload.students) {
+        const params = {
+          Source: config.fromEmail,
+          Destination: {
+            ToAddresses: [student.email],
+          },
+          Message: {
+            Subject: {
+              Data: `Welcome to Team ${payload.teamName}! 🎉`,
+              Charset: "UTF-8",
+            },
+            Body: {
+              Html: {
+                Data: getWelcomeMailTemplate(
+                  student.name,
+                  payload.teamName,
+                  student.email,
+                  payload.leaderName
+                ),
+                Charset: "UTF-8",
+              },
+            },
+          },
+        };
 
-            const params = {
-                Source: config.fromEmail,
-                Destination: {
-                    ToAddresses: [student.email]
-                },
-                Message: {
-                    Subject: {
-                        Data: `Welcome to Team ${payload.teamName}! 🎉`,
-                        Charset: 'UTF-8'
-                    },
-                    Body: {
-                        Html: {
-                            Data: getWelcomeMailTemplate(student.name, payload.teamName, student.email, payload.leaderName),
-                            Charset: 'UTF-8'
-                        }
-                    }
-                }
-            }
-
-            // Send verification email
-            sendEmailPromises.push(mailClient.sendEmail(params, student.email));
-        }
-        await Promise.all(sendEmailPromises);
-        console.log('Welcome emails sent successfully');
+        // Send verification email
+        sendEmailPromises.push(mailClient.sendEmail(params, student.email));
+      }
+      await Promise.all(sendEmailPromises);
+      console.log("Welcome emails sent successfully");
     } catch (error) {
-        console.error('Error in student welcome listener:', error);
-        // Don't throw error to prevent blocking the registration response
+      console.error("Error in student welcome listener:", error);
+      // Don't throw error to prevent blocking the registration response
     }
-});
+  }
+);
 
 // Event Listener for leader upon registration, sending verification link
-appEventEmitter.on(AppEvents.SEND_EMAIL_VERIFICATION, async (payload: VerificationLinkPayload) => {
+appEventEmitter.on(
+  AppEvents.SEND_EMAIL_VERIFICATION,
+  async (payload: VerificationLinkPayload) => {
     try {
-        logger.info('Student registered event received, sending verification link to leader:', { payload });
+      logger.info(
+        "Student registered event received, sending verification link to leader:",
+        { payload }
+      );
 
-        const student = payload.leader;
-        // Send verification email to each student
-        const token = mailClient.generateVerificationToken();
+      const student = payload.leader;
+      // Send verification email to each student
+      const token = mailClient.generateVerificationToken();
 
-        // Store token in database
-        await VerificationTokenRepository.create(student.id, student.email, token);
+      // Store token in database
+      await VerificationTokenRepository.create(
+        student.id,
+        student.email,
+        token
+      );
 
-        const verificationLink = `${config.frontendUrl}/auth/student/verify-email?token=${token}`
-        const params = {
-            Source: config.fromEmail,
-            Destination: {
-                ToAddresses: [student.email]
+      const verificationLink = `${config.frontendUrl}/auth/student/verify-email?token=${token}`;
+      const params = {
+        Source: config.fromEmail,
+        Destination: {
+          ToAddresses: [student.email],
+        },
+        Message: {
+          Subject: {
+            Data: `Verify Your Team Registration - ${payload.teamName}`,
+            Charset: "UTF-8",
+          },
+          Body: {
+            Html: {
+              Data: getVerficationMailTemplate(
+                student.name,
+                verificationLink,
+                payload.teamName
+              ),
+              Charset: "UTF-8",
             },
-            Message: {
-                Subject: {
-                    Data: `Verify Your Team Registration - ${payload.teamName}`,
-                    Charset: 'UTF-8'
-                },
-                Body: {
-                    Html: {
-                        Data: getVerficationMailTemplate(student.name, verificationLink, payload.teamName),
-                        Charset: 'UTF-8'
-                    }
-                }
-            }
-        }
-        // Send verification email
-        await mailClient.sendEmail(params, student.email)
-        logger.info('Verification email sent successfully');
-        } catch (error) {
-            logger.error('Error in student registered listener:', { error });
-            // Don't throw error to prevent blocking the registration response
-        }
-    });
+          },
+        },
+      };
+      // Send verification email
+      await mailClient.sendEmail(params, student.email);
+      logger.info("Verification email sent successfully");
+    } catch (error) {
+      logger.error("Error in student registered listener:", { error });
+      // Don't throw error to prevent blocking the registration response
+    }
+  }
+);
+
+// Event Listener for password reset email
+appEventEmitter.on(
+  AppEvents.SEND_PASSWORD_RESET_EMAIL,
+  async (payload: PasswordResetPayload) => {
+    try {
+      logger.info("Password reset email event received", {
+        studentId: payload.student.id,
+      });
+
+      const student = payload.student;
+      const resetLink = `${config.frontendUrl}/auth/student/reset-password?token=${payload.resetToken.token}`;
+
+      const params = {
+        Source: config.fromEmail,
+        Destination: {
+          ToAddresses: [student.email],
+        },
+        Message: {
+          Subject: {
+            Data: "Reset Your Password - Quiz App",
+            Charset: "UTF-8",
+          },
+          Body: {
+            Html: {
+              Data: getPasswordResetMailTemplate(student.name, resetLink),
+              Charset: "UTF-8",
+            },
+          },
+        },
+      };
+
+      // Send password reset email
+      await mailClient.sendEmail(params, student.email);
+      logger.info("Password reset email sent successfully", {
+        studentId: student.id,
+      });
+    } catch (error) {
+      logger.error("Error in password reset email listener:", { error });
+      // Don't throw error to prevent blocking the password reset response
+    }
+  }
+);

@@ -8,21 +8,22 @@ datasource db {
 }
 
 model Student {
-  id                 String              @id @default(uuid()) @db.Uuid
-  name               String
-  phone              String              @unique
-  email              String              @unique
-  isTeamLeader       Boolean             @default(false)
-  teamId             String?             @db.Uuid
-  createdAt          DateTime            @default(now()) @db.Timestamptz(6)
-  updatedAt          DateTime            @updatedAt @db.Timestamptz(6)
-  password           String
-  isVerified         Boolean             @default(false)
+  id                    String              @id @default(uuid()) @db.Uuid
+  name                  String
+  phone                 String              @unique
+  email                 String              @unique
+  isTeamLeader          Boolean             @default(false)
+  teamId                String?             @db.Uuid
+  createdAt             DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime            @updatedAt @db.Timestamptz(6)
+  password              String
+  isVerified            Boolean             @default(false)
   // Relations
-  responses          StudentResponse[]
-  team               Team?               @relation("TeamMembers", fields: [teamId], references: [id])
-  quizParticipant    QuizParticipant[]
-  verificationTokens VerificationToken[]
+  responses             StudentResponse[]
+  team                  Team?               @relation("TeamMembers", fields: [teamId], references: [id])
+  quizParticipant       QuizParticipant[]
+  verificationTokens    VerificationToken[]
+  passwordResetTokens   PasswordResetToken[] @relation("passwordResetTokens")
 
   @@index([email])
   @@index([phone])
@@ -38,6 +39,21 @@ model VerificationToken {
 
   student   Student  @relation(fields: [studentId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  studentId String    @db.Uuid
+  email     String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  student   Student   @relation("passwordResetTokens", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([expiresAt])
 }
 
 model Team {
