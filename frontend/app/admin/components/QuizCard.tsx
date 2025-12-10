@@ -121,7 +121,7 @@ export default function QuizCard({ quiz, applicantCount, onDelete }: QuizCardPro
           <Link href={`/admin/quiz/${quiz.id}`}>View Details</Link>
         </Button>
         <Button asChild className="flex-1 min-w-[120px]">
-          <Link href={`/admin/quiz/${quiz.id}/applicants`}>View Applicants</Link>
+          <Link href={`/admin/quiz/${quiz.id}/applicants`}>View Leaderboard</Link>
         </Button>
       </CardFooter>
     </Card>
