@@ -37,7 +37,7 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // vvalidation
     if (!newPassword || !confirmPassword) {
       setPasswordError("Please fill in all fields");
       return;
@@ -85,7 +85,7 @@ const ResetPassword = () => {
   };
 
   if (!token) {
-    return null; // Show nothing while redirecting
+    return null;
   }
 
   return (
@@ -145,7 +145,7 @@ const ResetPassword = () => {
             <div className="space-y-3 pt-4">
               <Button
                 type="submit"
-                className="w-full bg-black text-white hover:opacity-90"
+                className="w-full bg-blue-500 hover:bg-blue-400 text-white hover:opacity-90"
                 disabled={isLoading}
               >
                 {isLoading ? (
