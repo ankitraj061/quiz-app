@@ -100,7 +100,7 @@ const ApplicantsPage = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Loading leaderboard...</h2>
+          <h2 className="text-2xl font-semibold mb-2">Loading Leaderboard...</h2>
         </div>
       </div>
     );

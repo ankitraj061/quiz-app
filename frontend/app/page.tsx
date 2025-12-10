@@ -9,18 +9,20 @@ export default function Home() {
         <p className="text-gray-600 mb-8">
           Test your knowledge and compete with others!
         </p>
-        <Link
-          href="/auth/student/login"
-          className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-md"
-        >
-          Student Login
-        </Link>
-        <Link
-          href="/auth/admin/login"
-          className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-md mt-4"
-        >
-          Admin Login
-        </Link>
+        <div className="flex gap-5 justify-center">
+          <Link
+            href="/auth/student/login"
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-md mt-4"
+          >
+            I am a Student
+          </Link>
+          <Link
+            href=""
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-md mt-4"
+          >
+            I am a School
+          </Link>
+        </div>
       </div>
     </div>
   );
