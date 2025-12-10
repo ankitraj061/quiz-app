@@ -10,6 +10,7 @@ import { getQuizOfAdmin } from '@/app/lib/quizApi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useSidebar } from "@/components/ui/sidebar";
 
 export default function Dashboard() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, user, isLoading } = useAuth();
   const router = useRouter();
+  const { open } = useSidebar();
 
   // Auth protection - redirect if not admin
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 py-5">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
@@ -146,7 +148,8 @@ export default function Dashboard() {
 
         {/* Quiz List */}
         {!loading && !error && quizzes.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`grid gap-5 sm:grid-cols-1 ${open ? "md:grid-cols-1" : "md:grid-cols-2"} lg:grid-cols-2
+        xl:grid-cols-3`}>
             {quizzes.map((quiz) => (
               <QuizCard
                 key={quiz.id}

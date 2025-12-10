@@ -71,16 +71,16 @@ function AppSidebar() {
         
         {/* Collapsed Header */}
         {isCollapsed && (
-          <div className="p-3 border-b border-border flex justify-center">
+          <div className="py-3 border-b border-border flex justify-center">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary-foreground" />
+              <BookOpen className="w-4 h-4 text-primary-foreground" />
             </div>
           </div>
         )}
 
         {/* Navigation Section */}
         <SidebarGroup>
-          <SidebarGroupContent className="p-4">
+          <SidebarGroupContent className="py-4">
             <SidebarMenu>
               <ul className="space-y-2">
                 {menuItems.map((item) => {
@@ -109,33 +109,40 @@ function AppSidebar() {
         </SidebarGroup>
 
         {/* Footer Section with Logout Confirmation */}
-        <div className="mt-auto p-4 border-t border-border">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-              >
-                <LogOut className="w-5 h-5" />
-                {!isCollapsed && <span>Logout</span>}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will end your current session and you&apos;ll need to login again to access your account.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleLogout}>
-                  Yes, Logout
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        <SidebarGroup className='mt-auto py-4 border-t'>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <SidebarMenuButton
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary/50 cursor-pointer`}
+                    >
+                      <LogOut className="w-5 h-5" />
+                      {!isCollapsed && <span>Logout</span>}
+                    </SidebarMenuButton>
+                  </AlertDialogTrigger>
+
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will end your current session and you will need to login again.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleLogout}>
+                        Yes, Logout
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
       </SidebarContent>
     </Sidebar>
   );
