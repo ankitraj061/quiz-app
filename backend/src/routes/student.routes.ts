@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { validate } from "../middlewares/validate.middleware";
-import { ZStudentCreate } from "../types/student.types";
+import {
+  ZStudentCreate,
+  ZForgotPassword,
+  ZResetPassword,
+} from "../types/student.types";
 import { asyncHandler } from "../utils/asyncHandler";
 import { StudentController } from "../controllers/student.controller";
 import { authenticateToken } from "../middlewares/auth.middleware";
@@ -9,31 +13,75 @@ import { roleRequired } from "../middlewares/requiredRole.middleware";
 
 const router = Router();
 
-router.route("/")
-    .post(validate(ZStudentCreate), asyncHandler(StudentController.createStudent));
+router
+  .route("/")
+  .post(
+    validate(ZStudentCreate),
+    asyncHandler(StudentController.createStudent)
+  );
 
-router.route("/auth/login")
-    .post(validate(ZUserLogin), asyncHandler(StudentController.loginStudent));
+router
+  .route("/auth/login")
+  .post(validate(ZUserLogin), asyncHandler(StudentController.loginStudent));
 
-router.route("/quiz")
-    .get(authenticateToken, roleRequired("STUDENT"), asyncHandler(StudentController.getQuizForStudents));
+router
+  .route("/forgot-password")
+  .post(
+    validate(ZForgotPassword),
+    asyncHandler(StudentController.forgotPassword)
+  );
 
-router.route("/quiz/submit")
-    .post(authenticateToken, roleRequired("STUDENT"), asyncHandler(StudentController.submitQuiz));
+router
+  .route("/reset-password")
+  .post(
+    validate(ZResetPassword),
+    asyncHandler(StudentController.resetPassword)
+  );
 
-router.route("/quiz-response")
-    .get(authenticateToken, roleRequired("STUDENT"), asyncHandler(StudentController.getAllQuizResponse));
+router
+  .route("/quiz")
+  .get(
+    authenticateToken,
+    roleRequired("STUDENT"),
+    asyncHandler(StudentController.getQuizForStudents)
+  );
 
-router.route("/quiz-detail/:quizId")
-    .get(authenticateToken, roleRequired("STUDENT"), asyncHandler(StudentController.getQuizDetail));
+router
+  .route("/quiz/submit")
+  .post(
+    authenticateToken,
+    roleRequired("STUDENT"),
+    asyncHandler(StudentController.submitQuiz)
+  );
 
-router.route("/quiz-response/:quizId")
-    .get(authenticateToken,  roleRequired("STUDENT"), asyncHandler(StudentController.getQuizResponse));
+router
+  .route("/quiz-response")
+  .get(
+    authenticateToken,
+    roleRequired("STUDENT"),
+    asyncHandler(StudentController.getAllQuizResponse)
+  );
 
-router.route('/verify-email')
-    .get(asyncHandler(StudentController.verifyEmail));
+router
+  .route("/quiz-detail/:quizId")
+  .get(
+    authenticateToken,
+    roleRequired("STUDENT"),
+    asyncHandler(StudentController.getQuizDetail)
+  );
 
-router.route("/resend-link")
-    .post(asyncHandler(StudentController.resendVerificationLink));
+router
+  .route("/quiz-response/:quizId")
+  .get(
+    authenticateToken,
+    roleRequired("STUDENT"),
+    asyncHandler(StudentController.getQuizResponse)
+  );
+
+router.route("/verify-email").get(asyncHandler(StudentController.verifyEmail));
+
+router
+  .route("/resend-link")
+  .post(asyncHandler(StudentController.resendVerificationLink));
 
 export default router;

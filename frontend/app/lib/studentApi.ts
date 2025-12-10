@@ -5,119 +5,157 @@ import { ApiSuccessReponse } from "@/types/apiTypes";
 import { Quiz, QuizHistory } from "@/types/quiz";
 
 export async function createStudent(team: Team) {
-    let res = await fetch(`${config.backendUrl}/api/v1/student`, {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(team)
-    });
+  let res = await fetch(`${config.backendUrl}/api/v1/student`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(team),
+  });
 
-    if (!res.ok) {
-        await handleApiError(res, "Failed to create student")
-    }
-    res = await res.json();
+  if (!res.ok) {
+    await handleApiError(res, "Failed to create student");
+  }
+  res = await res.json();
 }
 
 export async function loginStudent(data: StudentLogin) {
-    let res = await fetch(`${config.backendUrl}/api/v1/student/auth/login`, {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: "include",
-        body: JSON.stringify(data)
-    });
-    
-    if (!res.ok) {
-        await handleApiError(res, "Failed to login")
-    }
-    res = await res.json();
-    return res;
+  let res = await fetch(`${config.backendUrl}/api/v1/student/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    await handleApiError(res, "Failed to login");
+  }
+  res = await res.json();
+  return res;
 }
 
 export async function getQuizzes() {
-    let res = await fetch(`${config.backendUrl}/api/v1/student/quiz`, {
-        method: "GET",
-        credentials: "include",
-    });
-    
-    if (!res.ok) {
-        await handleApiError(res, "Failed to get all quizzes")
-    }
-    const data: ApiSuccessReponse<Quiz[]> = await res.json();
-    
-    return data;
+  let res = await fetch(`${config.backendUrl}/api/v1/student/quiz`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    await handleApiError(res, "Failed to get all quizzes");
+  }
+  const data: ApiSuccessReponse<Quiz[]> = await res.json();
+
+  return data;
 }
 
 export async function getQuizDetail(quizId: string) {
-    let res = await fetch(`${config.backendUrl}/api/v1/student/quiz-detail/${quizId}`, {
-        method: "GET",
-        credentials: "include",
-    });
-    
-    if (!res.ok) {
-        await handleApiError(res, "Failed to get quiz detail.")
+  let res = await fetch(
+    `${config.backendUrl}/api/v1/student/quiz-detail/${quizId}`,
+    {
+      method: "GET",
+      credentials: "include",
     }
-    const data: ApiSuccessReponse<Quiz> = await res.json();
-    return data;
+  );
+
+  if (!res.ok) {
+    await handleApiError(res, "Failed to get quiz detail.");
+  }
+  const data: ApiSuccessReponse<Quiz> = await res.json();
+  return data;
 }
 
 export async function submitQuiz(responseData: SubmitQuiz) {
-    let res = await fetch(`${config.backendUrl}/api/v1/student/quiz/submit`, {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(responseData),
-        credentials: "include"
-    });
+  let res = await fetch(`${config.backendUrl}/api/v1/student/quiz/submit`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(responseData),
+    credentials: "include",
+  });
 
-    if (!res.ok) {
-        await handleApiError(res, "Failed to submit the quiz.")
-    }
-    const response: ApiSuccessReponse<unknown> = await res.json();
-    return response;
+  if (!res.ok) {
+    await handleApiError(res, "Failed to submit the quiz.");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
 }
 
 export async function getQuizResults(quizId: string) {
-    let res = await fetch(`${config.backendUrl}/api/v1/student/quiz-response/${quizId}`, {
-        method: "GET",
-        credentials: "include"
-    });
-
-    if (!res.ok) {
-        await handleApiError(res, "Failed to submit the quiz.")
+  let res = await fetch(
+    `${config.backendUrl}/api/v1/student/quiz-response/${quizId}`,
+    {
+      method: "GET",
+      credentials: "include",
     }
-    const response: ApiSuccessReponse<QuizResponse> = await res.json();
-    return response;
+  );
+
+  if (!res.ok) {
+    await handleApiError(res, "Failed to submit the quiz.");
+  }
+  const response: ApiSuccessReponse<QuizResponse> = await res.json();
+  return response;
 }
 
 export async function getQuizHistory() {
-    let res = await fetch(`${config.backendUrl}/api/v1/student/quiz-response`, {
-        method: "GET",
-        credentials: "include"
-    });
+  let res = await fetch(`${config.backendUrl}/api/v1/student/quiz-response`, {
+    method: "GET",
+    credentials: "include",
+  });
 
-    if (!res.ok) {
-        await handleApiError(res, "Failed to submit the quiz.")
-    }
-    const response: ApiSuccessReponse<QuizHistory> = await res.json();
-    return response;
+  if (!res.ok) {
+    await handleApiError(res, "Failed to submit the quiz.");
+  }
+  const response: ApiSuccessReponse<QuizHistory> = await res.json();
+  return response;
 }
 
 export async function resendVerificationLink(email: string) {
-    let res = await fetch(`${config.backendUrl}/api/v1/student/resend-link`, {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-    });
+  let res = await fetch(`${config.backendUrl}/api/v1/student/resend-link`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
 
-    if (!res.ok) {
-        await handleApiError(res, "Failed to resend verification link.")
-    }
-    const response: ApiSuccessReponse<unknown> = await res.json();
-    return response;
+  if (!res.ok) {
+    await handleApiError(res, "Failed to resend verification link.");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
+}
+
+export async function forgotPassword(email: string) {
+  let res = await fetch(`${config.backendUrl}/api/v1/student/forgot-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!res.ok) {
+    await handleApiError(res, "Failed to send password reset email.");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  let res = await fetch(`${config.backendUrl}/api/v1/student/reset-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token, newPassword }),
+  });
+
+  if (!res.ok) {
+    await handleApiError(res, "Failed to reset password.");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
 }

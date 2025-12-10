@@ -21,31 +21,43 @@ export const ZStudentCreate = z.object({
   state: z.string().optional(),
   city: z.string().optional(),
   students: z.array(ZStudent).min(2),
-  password: z.string().min(6, "The password should have atleast length of 6.")
+  password: z.string().min(6, "The password should have atleast length of 6."),
 });
 
 export const ZSubmitQuiz = z.object({
   quizId: z.uuid(),
   submittedAt: z.string(),
-  response: z.array(z.object({
-    questionId: z.uuid(),
-    answer: z.string()
-  }))
+  response: z.array(
+    z.object({
+      questionId: z.uuid(),
+      answer: z.string(),
+    })
+  ),
 });
 
 export const ZResendLink = z.object({
   email: z.email(),
 });
 
+export const ZForgotPassword = z.object({
+  email: z.email(),
+});
+
+export const ZResetPassword = z.object({
+  token: z.string().min(1, "Token is required"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+});
 
 export type TStudentCreate = z.infer<typeof ZStudentCreate>;
 export type TStudent = z.infer<typeof ZStudent>;
 export type TSubmitQuiz = z.infer<typeof ZSubmitQuiz>;
 export type TResponseData = {
-  studentId: string,
-  questionId: string,
-  studentAnswer: string,
-  isCorrect: boolean,
-  score: number
-}
+  studentId: string;
+  questionId: string;
+  studentAnswer: string;
+  isCorrect: boolean;
+  score: number;
+};
 export type TResendLink = z.infer<typeof ZResendLink>;
+export type TForgotPassword = z.infer<typeof ZForgotPassword>;
+export type TResetPassword = z.infer<typeof ZResetPassword>;
