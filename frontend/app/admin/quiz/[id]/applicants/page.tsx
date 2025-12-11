@@ -7,6 +7,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getApplicantsByQuizId } from "@/app/lib/quizApi";
+import * as XLSX from "xlsx";
 import {
   Table,
   TableBody,
@@ -55,20 +56,22 @@ const ApplicantsPage = () => {
         setLoading(true);
         setError(null);
 
-        const data = await getApplicantsByQuizId(quizId) as LeaderboardData;
-        
+        const data = (await getApplicantsByQuizId(quizId)) as LeaderboardData;
+
         // Check if data and participants exist and is an array
         if (data && data.quizDetail) {
           setQuizDetail(data.quizDetail);
         }
-        
+
         if (data && Array.isArray(data.participants)) {
           setParticipants(data.participants);
         } else {
           setParticipants([]);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load leaderboard");
+        setError(
+          err instanceof Error ? err.message : "Failed to load leaderboard"
+        );
         console.error("Error fetching leaderboard:", err);
       } finally {
         setLoading(false);
@@ -79,7 +82,7 @@ const ApplicantsPage = () => {
   }, [quizId]);
 
   // Only spread if participants is an array
-  const sortedParticipants = Array.isArray(participants) 
+  const sortedParticipants = Array.isArray(participants)
     ? [...participants].sort((a, b) => {
         return sortOrder === "desc"
           ? b.totalScore - a.totalScore
@@ -96,11 +99,73 @@ const ApplicantsPage = () => {
     return totalMarks > 0 ? ((score / totalMarks) * 100).toFixed(1) : "0";
   };
 
+  // Export leaderboard to Excel
+  const exportToExcel = () => {
+    if (!quizDetail || sortedParticipants.length === 0) {
+      return;
+    }
+
+    // Prepare data for Excel
+    const excelData = sortedParticipants.map((participant, index) => {
+      const percentage = calculatePercentage(
+        participant.totalScore,
+        quizDetail.totalMarks
+      );
+      const rank =
+        sortOrder === "desc" ? index + 1 : participants.length - index;
+
+      return {
+        Rank: rank,
+        Name: participant.studentName,
+        Team: participant.teamName,
+        Email: participant.studentEmail,
+        Score: `${participant.totalScore}/${quizDetail.totalMarks}`,
+        Percentage: `${percentage}%`,
+        "Submitted At": new Date(participant.submittedAt).toLocaleString(
+          "en-IN",
+          {
+            dateStyle: "medium",
+            timeStyle: "short",
+          }
+        ),
+      };
+    });
+
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths
+    worksheet["!cols"] = [
+      { wch: 6 }, // Rank
+      { wch: 20 }, // Name
+      { wch: 20 }, // Team
+      { wch: 30 }, // Email
+      { wch: 10 }, // Score
+      { wch: 12 }, // Percentage
+      { wch: 25 }, // Submitted At
+    ];
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Leaderboard");
+
+    // Generate filename with quiz name and timestamp
+    const fileName = `${quizDetail.quizName.replace(
+      /[^a-z0-9]/gi,
+      "_"
+    )}_Leaderboard_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+    // Download the file
+    XLSX.writeFile(workbook, fileName);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Loading Leaderboard...</h2>
+          <h2 className="text-2xl font-semibold mb-2">
+            Loading Leaderboard...
+          </h2>
         </div>
       </div>
     );
@@ -154,8 +219,13 @@ const ApplicantsPage = () => {
               <span>Total Marks: {quizDetail.totalMarks}</span>
             </div>
             <div>
-              <Button onClick={() => console.log('Export data clicked')} variant="outline" className="cursor-pointer mr-3">
-                <Download className="w-4 h-4" />
+              <Button
+                onClick={exportToExcel}
+                variant="outline"
+                className="cursor-pointer mr-3"
+                disabled={participants.length === 0}
+              >
+                <Download className="w-4 h-4 mr-2" />
                 Export
               </Button>
             </div>
@@ -216,7 +286,9 @@ const ApplicantsPage = () => {
                     return (
                       <TableRow key={participant.id}>
                         <TableCell className="font-bold text-center">
-                          {sortOrder === "desc" ? index + 1 : participants.length - index}
+                          {sortOrder === "desc"
+                            ? index + 1
+                            : participants.length - index}
                         </TableCell>
                         <TableCell className="font-medium">
                           {participant.studentName}
@@ -249,10 +321,13 @@ const ApplicantsPage = () => {
                           {participant.totalCorrectAnswers}/{quizDetail.totalQuestions}
                         </TableCell> */}
                         <TableCell className="text-muted-foreground text-sm">
-                          {new Date(participant.submittedAt).toLocaleString("en-IN", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                          })}
+                          {new Date(participant.submittedAt).toLocaleString(
+                            "en-IN",
+                            {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            }
+                          )}
                         </TableCell>
                       </TableRow>
                     );
