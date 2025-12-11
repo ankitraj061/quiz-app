@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -62,11 +62,16 @@ const QuizPage = () => {
     }
   }, [quizId]);
 
+  const fetched = useRef(false);
+
   useEffect(() => {
-    if (quizId) {
+    if (!quizId) return;
+
+    if (!fetched.current) {
+      fetched.current = true;
       fetchQuizData();
     }
-  }, [fetchQuizData, quizId]);
+  }, [quizId]);
 
   // Function to enter fullscreen
   const enterFullscreen = async () => {

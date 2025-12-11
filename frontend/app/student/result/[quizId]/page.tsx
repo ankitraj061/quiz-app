@@ -222,7 +222,8 @@ const QuizResultPage = () => {
           <Button
             onClick={() => window.print()}
             size="lg"
-            className="bg-gradient-primary hover:opacity-90 px-8"
+            variant="default"
+            className="px-8"
           >
             Print Results
           </Button>
