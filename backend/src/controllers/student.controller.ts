@@ -23,6 +23,8 @@ import { appEventEmitter, AppEvents } from "../events/eventEmitter";
 import { VerificationTokenRepository } from "../repository/verificationToken.repository";
 import { PasswordResetTokenRepository } from "../repository/passwordResetToken.repository";
 import { pushCertificateTask } from "../workers/workerManager";
+import { fisherYatesShuffle } from "../utils/shuffleQuestion";
+
 
 export class StudentController {
   static createStudent = async (req: Request, res: Response) => {
@@ -122,12 +124,18 @@ export class StudentController {
     if (!verifyUUID(quizId)) {
       throw new ApiError("Please provide valid quiz ID");
     }
-    const data = await QuizRepository.getByIdForStudent(quizId);
-    if (!data) {
+    const dataFromDb = await QuizRepository.getByIdForStudent(quizId);
+    if (!dataFromDb) {
       throw new ApiError(
         "No quiz exists with provided id, please send correct id."
       );
     }
+    const data = structuredClone(dataFromDb);
+
+    if (Array.isArray(data.questions)) {
+      data.questions = fisherYatesShuffle(data.questions);
+    }
+
     ApiResponse.success(res, data, "Successfully retrieved the quiz details.");
   }
 

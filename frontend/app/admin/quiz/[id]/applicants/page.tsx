@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getApplicantsByQuizId } from "@/app/lib/quizApi";
@@ -148,9 +148,17 @@ const ApplicantsPage = () => {
             {quizDetail.quizName}
           </h1>
           <p className="text-muted-foreground mb-2">{quizDetail.description}</p>
-          <div className="flex gap-4 text-sm text-muted-foreground">
-            <span>Questions: {quizDetail.totalQuestions}</span>
-            <span>Total Marks: {quizDetail.totalMarks}</span>
+          <div className="flex justify-between">
+            <div className="flex gap-4 text-sm text-muted-foreground items-center">
+              <span>Questions: {quizDetail.totalQuestions}</span>
+              <span>Total Marks: {quizDetail.totalMarks}</span>
+            </div>
+            <div>
+              <Button onClick={() => console.log('Export data clicked')} variant="outline" className="cursor-pointer mr-3">
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+            </div>
           </div>
         </div>
 
