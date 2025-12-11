@@ -229,6 +229,7 @@ export class QuizRepository {
       select: {
         id: true,
         answer: true,
+        options: true,
         score: true,
       },
     });

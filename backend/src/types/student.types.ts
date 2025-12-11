@@ -30,7 +30,7 @@ export const ZSubmitQuiz = z.object({
   response: z.array(
     z.object({
       questionId: z.uuid(),
-      answer: z.string(),
+      answerIndex: z.number().int().min(0),
     })
   ),
 });
