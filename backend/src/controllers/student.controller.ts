@@ -167,7 +167,7 @@ export class StudentController {
 
     const studentAnswerMap: Record<string, string> = {};
     response.forEach((question) => {
-      studentAnswerMap[question.questionId] = question.answer;
+      studentAnswerMap[question.questionId] = question.answerIndex.toString();
     });
 
     const responseDataOfStudent: TResponseData[] = [];
@@ -179,8 +179,12 @@ export class StudentController {
         studentId,
         questionId: question.id,
         studentAnswer,
-        isCorrect: studentAnswer === question.answer,
-        score: studentAnswer === question.answer ? question.score : 0,
+        isCorrect:
+          question.options[parseInt(studentAnswer)] === question.answer,
+        score:
+          question.options[parseInt(studentAnswer)] === question.answer
+            ? question.score
+            : 0,
       };
       totalScore += responseData.score;
       totalPossibleScore += question.score;

@@ -143,7 +143,7 @@ const QuizPage = () => {
     try {
       const response = quiz.questions.map((q) => ({
         questionId: q.id ?? "",
-        answer: q.options[answers[q.id ?? ""]],
+        answerIndex: answers[q.id ?? ""],
       }));
 
       const submissionData: SubmitQuiz = {
