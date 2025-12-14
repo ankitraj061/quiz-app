@@ -3,32 +3,72 @@ import { handleApiError } from "./apiError";
 import { ApiSuccessReponse } from "@/types/apiTypes";
 
 export async function loginAdmin(email: string, password: string) {
-    const res = await fetch(`${config.backendUrl}/api/v1/admin/auth/login`, {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: "include",
-        body: JSON.stringify({ email, password })
-    });
-    if (!res.ok) {
-        await handleApiError(res, "Failed to login.")
-    }
-    const response: ApiSuccessReponse<unknown> = await res.json();
-    return response;
+  const res = await fetch(`${config.backendUrl}/api/v1/admin/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    await handleApiError(res, "Failed to login.");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
 }
-export async function createAdmin(name: string, email: string,phone: string, password: string) {
-    const res = await fetch(`${config.backendUrl}/api/v1/admin`, {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: "include",
-        body: JSON.stringify({ name, email, phone, password })
-    });
-    if (!res.ok) {
-        await handleApiError(res, "Failed to create admin.")
-    }
-    const response: ApiSuccessReponse<unknown> = await res.json();
-    return response;
+export async function createAdmin(
+  name: string,
+  email: string,
+  phone: string,
+  password: string
+) {
+  const res = await fetch(`${config.backendUrl}/api/v1/admin`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ name, email, phone, password }),
+  });
+  if (!res.ok) {
+    await handleApiError(res, "Failed to create admin.");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
+}
+
+export async function verifyAdminPassword(currentPassword: string) {
+  const res = await fetch(`${config.backendUrl}/api/v1/admin/verify-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ currentPassword }),
+  });
+  if (!res.ok) {
+    await handleApiError(res, "Current password is incorrect.");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
+}
+
+export async function changeAdminPassword(
+  currentPassword: string,
+  newPassword: string
+) {
+  const res = await fetch(`${config.backendUrl}/api/v1/admin/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  if (!res.ok) {
+    await handleApiError(res, "Failed to update password.");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
 }

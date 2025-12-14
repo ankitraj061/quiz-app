@@ -159,3 +159,46 @@ export async function resetPassword(token: string, newPassword: string) {
   const response: ApiSuccessReponse<unknown> = await res.json();
   return response;
 }
+
+export async function verifyCurrentPassword(currentPassword: string) {
+  const res = await fetch(
+    `${config.backendUrl}/api/v1/student/verify-password`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ currentPassword }),
+    }
+  );
+
+  if (!res.ok) {
+    await handleApiError(res, "Current password is incorrect");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+) {
+  const res = await fetch(
+    `${config.backendUrl}/api/v1/student/change-password`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }
+  );
+
+  if (!res.ok) {
+    await handleApiError(res, "Failed to update password");
+  }
+  const response: ApiSuccessReponse<unknown> = await res.json();
+  return response;
+}

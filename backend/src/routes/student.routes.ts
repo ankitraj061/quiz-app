@@ -5,6 +5,7 @@ import {
   ZForgotPassword,
   ZResetPassword,
 } from "../types/student.types";
+import { ZChangePassword, ZVerifyPassword } from "../types/auth.types";
 import { asyncHandler } from "../utils/asyncHandler";
 import { StudentController } from "../controllers/student.controller";
 import { authenticateToken } from "../middlewares/auth.middleware";
@@ -36,6 +37,24 @@ router
   .post(
     validate(ZResetPassword),
     asyncHandler(StudentController.resetPassword)
+  );
+
+router
+  .route("/verify-password")
+  .post(
+    authenticateToken,
+    roleRequired("STUDENT"),
+    validate(ZVerifyPassword),
+    asyncHandler(StudentController.verifyPassword)
+  );
+
+router
+  .route("/change-password")
+  .post(
+    authenticateToken,
+    roleRequired("STUDENT"),
+    validate(ZChangePassword),
+    asyncHandler(StudentController.changePassword)
   );
 
 router

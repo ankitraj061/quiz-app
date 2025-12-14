@@ -48,6 +48,16 @@ export class StudentRepository {
       },
     });
   };
+
+  static getAuthById = async (id: string) => {
+    return prisma.student.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        password: true,
+      },
+    });
+  };
   static getTeamByStudentId = async (id: string | null | undefined) => {
     if (!id) {
       return null;
