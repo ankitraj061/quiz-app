@@ -24,7 +24,7 @@ import { VerificationTokenRepository } from "../repository/verificationToken.rep
 import { PasswordResetTokenRepository } from "../repository/passwordResetToken.repository";
 import { pushCertificateTask } from "../workers/workerManager";
 import { fisherYatesShuffle } from "../utils/shuffleQuestion";
-
+import { TChangePassword, TVerifyPassword } from "../types/auth.types";
 
 export class StudentController {
   static createStudent = async (req: Request, res: Response) => {
@@ -454,5 +454,56 @@ export class StudentController {
       {},
       "Password has been reset successfully. You can now login with your new password."
     );
+  };
+
+  static verifyPassword = async (req: Request, res: Response) => {
+    const studentId = QuizController.getUserId(req);
+    const { currentPassword } = req.body as TVerifyPassword;
+
+    const student = await StudentRepository.getAuthById(studentId);
+    if (!student) {
+      throw new ApiError("Student not found", HTTP_STATUS.NOT_FOUND);
+    }
+
+    const isValid = await PasswordUtils.compare(
+      currentPassword,
+      student.password
+    );
+
+    if (!isValid) {
+      throw new ApiError(
+        "Current password is incorrect",
+        HTTP_STATUS.UNAUTHORIZED
+      );
+    }
+
+    ApiResponse.success(res, {}, "Password verified");
+  };
+
+  static changePassword = async (req: Request, res: Response) => {
+    const studentId = QuizController.getUserId(req);
+    const { currentPassword, newPassword } = req.body as TChangePassword;
+
+    const student = await StudentRepository.getAuthById(studentId);
+    if (!student) {
+      throw new ApiError("Student not found", HTTP_STATUS.NOT_FOUND);
+    }
+
+    const isValid = await PasswordUtils.compare(
+      currentPassword,
+      student.password
+    );
+
+    if (!isValid) {
+      throw new ApiError(
+        "Current password is incorrect",
+        HTTP_STATUS.UNAUTHORIZED
+      );
+    }
+
+    const hashedPassword = await PasswordUtils.hash(newPassword);
+    await StudentRepository.updatePassword(studentId, hashedPassword);
+
+    ApiResponse.success(res, {}, "Password updated successfully");
   };
 }

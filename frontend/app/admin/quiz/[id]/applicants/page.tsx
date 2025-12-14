@@ -81,7 +81,7 @@ const ApplicantsPage = () => {
     fetchLeaderboard();
   }, [quizId]);
 
-  // Only spread if participants is an array
+  // only spread if participants is an array
   const sortedParticipants = Array.isArray(participants)
     ? [...participants].sort((a, b) => {
         return sortOrder === "desc"
@@ -94,18 +94,18 @@ const ApplicantsPage = () => {
     setSortOrder(sortOrder === "desc" ? "asc" : "desc");
   };
 
-  // Calculate percentage score
+  // calculate percentage score
   const calculatePercentage = (score: number, totalMarks: number) => {
     return totalMarks > 0 ? ((score / totalMarks) * 100).toFixed(1) : "0";
   };
 
-  // Export leaderboard to Excel
+  // exportt leaderboard to Excel
   const exportToExcel = () => {
     if (!quizDetail || sortedParticipants.length === 0) {
       return;
     }
 
-    // Prepare data for Excel
+    // prepare data for Excel
     const excelData = sortedParticipants.map((participant, index) => {
       const percentage = calculatePercentage(
         participant.totalScore,
@@ -131,21 +131,21 @@ const ApplicantsPage = () => {
       };
     });
 
-    // Create worksheet
+    // create worksheet
     const worksheet = XLSX.utils.json_to_sheet(excelData);
 
     // Set column widths
     worksheet["!cols"] = [
-      { wch: 6 }, // Rank
+      { wch: 6 }, 
       { wch: 20 }, // Name
-      { wch: 20 }, // Team
-      { wch: 30 }, // Email
-      { wch: 10 }, // Score
-      { wch: 12 }, // Percentage
-      { wch: 25 }, // Submitted At
+      { wch: 20 }, // team
+      { wch: 30 }, // wmail
+      { wch: 10 }, // score
+      { wch: 12 }, // percentage
+      { wch: 25 }, // submitted At
     ];
 
-    // Create workbook
+    //workbook
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Leaderboard");
 
@@ -155,7 +155,7 @@ const ApplicantsPage = () => {
       "_"
     )}_Leaderboard_${new Date().toISOString().split("T")[0]}.xlsx`;
 
-    // Download the file
+    // download the file
     XLSX.writeFile(workbook, fileName);
   };
 
