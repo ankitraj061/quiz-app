@@ -227,21 +227,24 @@ function AppSidebar() {
                     </DialogHeader>
 
                     {step === "verify" ? (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Current password
-                        </label>
-                        <Input
-                          type="password"
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          placeholder="Enter current password"
-                        />
+                      <div className="space-y-6 py-4">
+                        <div className="space-y-3">
+                          <label className="text-sm font-semibold text-foreground block">
+                            Current password
+                          </label>
+                          <Input
+                            type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="Enter current password"
+                            className="h-10"
+                          />
+                        </div>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">
+                      <div className="space-y-6 py-4">
+                        <div className="space-y-3">
+                          <label className="text-sm font-semibold text-foreground block">
                             New password
                           </label>
                           <Input
@@ -249,10 +252,11 @@ function AppSidebar() {
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Enter new password"
+                            className="h-10"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">
+                        <div className="space-y-3">
+                          <label className="text-sm font-semibold text-foreground block">
                             Confirm password
                           </label>
                           <Input
@@ -260,12 +264,13 @@ function AppSidebar() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Re-enter new password"
+                            className="h-10"
                           />
                         </div>
                       </div>
                     )}
 
-                    <DialogFooter className="gap-2 sm:gap-0">
+                    <DialogFooter className="gap-3">
                       <Button
                         variant="outline"
                         onClick={() => {
