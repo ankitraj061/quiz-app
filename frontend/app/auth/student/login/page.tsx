@@ -1,414 +1,421 @@
-"use client";
+// "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { useAuth } from "@/app/contexts/AuthContext";
-import { Loader2, LogIn, Mail, Key } from "lucide-react";
-import {
-  loginStudent,
-  resendVerificationLink,
-  forgotPassword,
-} from "@/app/lib/studentApi";
-import { ApiError } from "@/app/lib/apiError";
+// import { useEffect, useState } from "react";
+// import { useRouter } from "next/navigation";
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
+// import { Label } from "@/components/ui/label";
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardHeader,
+//   CardTitle,
+// } from "@/components/ui/card";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+// } from "@/components/ui/dialog";
+// import { toast } from "sonner";
+// import { useAuth } from "@/app/contexts/AuthContext";
+// import { Loader2, LogIn, Mail, Key } from "lucide-react";
+// import {
+//   loginStudent,
+//   resendVerificationLink,
+//   forgotPassword,
+// } from "@/app/lib/studentApi";
+// import { ApiError } from "@/app/lib/apiError";
 
-const isEmail = (value: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(value.trim());
-};
+// const isEmail = (value: string): boolean => {
+//   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+//   return emailRegex.test(value.trim());
+// };
 
-const isPhone = (value: string): boolean => {
-  const phoneRegex = /^[0-9]{10}$/;
-  return phoneRegex.test(value.trim());
-};
+// const isPhone = (value: string): boolean => {
+//   const phoneRegex = /^[0-9]{10}$/;
+//   return phoneRegex.test(value.trim());
+// };
 
-const parseIdentifier = (identifier: string, password: string) => {
-  const trimmedIdentifier = identifier.trim();
+// const parseIdentifier = (identifier: string, password: string) => {
+//   const trimmedIdentifier = identifier.trim();
 
-  if (isEmail(trimmedIdentifier)) {
-    return { email: trimmedIdentifier, password };
-  } else if (isPhone(trimmedIdentifier)) {
-    return { phone: trimmedIdentifier, password };
-  } else {
-    return null;
-  }
-};
+//   if (isEmail(trimmedIdentifier)) {
+//     return { email: trimmedIdentifier, password };
+//   } else if (isPhone(trimmedIdentifier)) {
+//     return { phone: trimmedIdentifier, password };
+//   } else {
+//     return null;
+//   }
+// };
 
-const Login = () => {
-  const router = useRouter();
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isForgotDialogOpen, setIsForgotDialogOpen] = useState(false);
-  const [resendEmail, setResendEmail] = useState("");
-  const [forgotEmail, setForgotEmail] = useState("");
-  const [isResending, setIsResending] = useState(false);
-  const [isForgotLoading, setIsForgotLoading] = useState(false);
+// const Login = () => {
+//   const router = useRouter();
+//   const [identifier, setIdentifier] = useState("");
+//   const [password, setPassword] = useState("");
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [isDialogOpen, setIsDialogOpen] = useState(false);
+//   const [isForgotDialogOpen, setIsForgotDialogOpen] = useState(false);
+//   const [resendEmail, setResendEmail] = useState("");
+//   const [forgotEmail, setForgotEmail] = useState("");
+//   const [isResending, setIsResending] = useState(false);
+//   const [isForgotLoading, setIsForgotLoading] = useState(false);
 
-  const {
-    isAuthenticated,
-    checkAuth,
-    user,
-    isLoading: authLoading,
-  } = useAuth();
+//   const {
+//     isAuthenticated,
+//     checkAuth,
+//     user,
+//     isLoading: authLoading,
+//   } = useAuth();
 
-  useEffect(() => {
-    if (!authLoading && isAuthenticated && user?.role === "STUDENT") {
-      router.replace("/student/dashboard");
-    }
-  }, [authLoading, isAuthenticated, user, router]);
+//   useEffect(() => {
+//     if (!authLoading && isAuthenticated && user?.role === "STUDENT") {
+//       router.replace("/student/dashboard");
+//     }
+//   }, [authLoading, isAuthenticated, user, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
 
-    if (!identifier.trim() || !password.trim()) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+//     if (!identifier.trim() || !password.trim()) {
+//       toast.error("Please fill in all fields");
+//       return;
+//     }
 
-    const data = parseIdentifier(identifier, password);
-    if (!data) {
-      toast.error("Please enter a valid email or 10-digit phone number");
-      return;
-    }
+//     const data = parseIdentifier(identifier, password);
+//     if (!data) {
+//       toast.error("Please enter a valid email or 10-digit phone number");
+//       return;
+//     }
 
-    try {
-      setIsLoading(true);
+//     try {
+//       setIsLoading(true);
 
-      const success = await loginStudent(data);
+//       const success = await loginStudent(data);
 
-      if (success) {
-        toast.success("Login successful!");
+//       if (success) {
+//         toast.success("Login successful!");
 
-        await checkAuth();
+//         await checkAuth();
 
-        setIsLoading(false);
-      } else {
-        toast.error(
-          "Invalid credentials. Please check your email/phone and password."
-        );
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error("Student login error:", error);
-      if (error instanceof ApiError) {
-        toast.error(error.message);
-        if (error.errors && error.errors.length > 0) {
-          error.errors.forEach((err) => {
-            toast.error(err);
-          });
-        }
-      } else {
-        toast.error("An unexpected error occurred. Please try again.");
-        console.error("Login error:", error);
-      }
-      setIsLoading(false);
-    }
-  };
+//         setIsLoading(false);
+//       } else {
+//         toast.error(
+//           "Invalid credentials. Please check your email/phone and password."
+//         );
+//         setIsLoading(false);
+//       }
+//     } catch (error) {
+//       console.error("Student login error:", error);
+//       if (error instanceof ApiError) {
+//         toast.error(error.message);
+//         if (error.errors && error.errors.length > 0) {
+//           error.errors.forEach((err) => {
+//             toast.error(err);
+//           });
+//         }
+//       } else {
+//         toast.error("An unexpected error occurred. Please try again.");
+//         console.error("Login error:", error);
+//       }
+//       setIsLoading(false);
+//     }
+//   };
 
-  const handleResendVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+//   const handleResendVerification = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     e.stopPropagation();
 
-    if (!resendEmail.trim()) {
-      toast.error("Please enter your email");
-      return;
-    }
+//     if (!resendEmail.trim()) {
+//       toast.error("Please enter your email");
+//       return;
+//     }
 
-    if (!isEmail(resendEmail)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
+//     if (!isEmail(resendEmail)) {
+//       toast.error("Please enter a valid email address");
+//       return;
+//     }
 
-    try {
-      setIsResending(true);
-      await resendVerificationLink(resendEmail);
+//     try {
+//       setIsResending(true);
+//       await resendVerificationLink(resendEmail);
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+//       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      toast.success("Verification link sent! Please check your email.");
-      setIsDialogOpen(false);
-      setResendEmail("");
-    } catch (error) {
-      if (error instanceof ApiError) {
-        toast.error(error.message);
-      } else {
-        toast.error("Failed to send verification email. Please try again.");
-        console.error("Resend verification error:", error);
-      }
-    } finally {
-      setIsResending(false);
-    }
-  };
+//       toast.success("Verification link sent! Please check your email.");
+//       setIsDialogOpen(false);
+//       setResendEmail("");
+//     } catch (error) {
+//       if (error instanceof ApiError) {
+//         toast.error(error.message);
+//       } else {
+//         toast.error("Failed to send verification email. Please try again.");
+//         console.error("Resend verification error:", error);
+//       }
+//     } finally {
+//       setIsResending(false);
+//     }
+//   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+//   const handleForgotPassword = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     e.stopPropagation();
 
-    if (!forgotEmail.trim()) {
-      toast.error("Please enter your email");
-      return;
-    }
+//     if (!forgotEmail.trim()) {
+//       toast.error("Please enter your email");
+//       return;
+//     }
 
-    if (!isEmail(forgotEmail)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
+//     if (!isEmail(forgotEmail)) {
+//       toast.error("Please enter a valid email address");
+//       return;
+//     }
 
-    try {
-      setIsForgotLoading(true);
-      await forgotPassword(forgotEmail);
+//     try {
+//       setIsForgotLoading(true);
+//       await forgotPassword(forgotEmail);
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+//       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      toast.success("Password reset link sent! Please check your email.");
-      setIsForgotDialogOpen(false);
-      setForgotEmail("");
-    } catch (error) {
-      if (error instanceof ApiError) {
-        toast.error(error.message);
-      } else {
-        toast.error("Failed to send password reset email. Please try again.");
-        console.error("Forgot password error:", error);
-      }
-    } finally {
-      setIsForgotLoading(false);
-    }
-  };
+//       toast.success("Password reset link sent! Please check your email.");
+//       setIsForgotDialogOpen(false);
+//       setForgotEmail("");
+//     } catch (error) {
+//       if (error instanceof ApiError) {
+//         toast.error(error.message);
+//       } else {
+//         toast.error("Failed to send password reset email. Please try again.");
+//         console.error("Forgot password error:", error);
+//       }
+//     } finally {
+//       setIsForgotLoading(false);
+//     }
+//   };
 
-  const getIdentifierError = () => {
-    if (!identifier) return null;
-    if (isEmail(identifier) || isPhone(identifier)) return null;
-    return "Please enter a valid email or 10-digit phone number";
-  };
+//   const getIdentifierError = () => {
+//     if (!identifier) return null;
+//     if (isEmail(identifier) || isPhone(identifier)) return null;
+//     return "Please enter a valid email or 10-digit phone number";
+//   };
 
-  const identifierError = getIdentifierError();
+//   const identifierError = getIdentifierError();
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-hero">
-      <Card className="w-full max-w-md shadow-large">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-primary flex items-center justify-center">
-              <LogIn className="h-8 w-8 text-primary-foreground" />
-            </div>
-          </div>
-          <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
-          <CardDescription className="text-base">
-            Login with your email or phone number
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="identifier">Email or Phone Number</Label>
-              <Input
-                id="identifier"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="Enter your email or phone"
-                required
-                disabled={isLoading}
-                className={identifierError ? "border-red-500" : ""}
-              />
-              {identifierError && (
-                <p className="text-sm text-red-500">{identifierError}</p>
-              )}
-            </div>
+//   return (
+//     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-hero">
+//       <Card className="w-full max-w-md shadow-large">
+//         <CardHeader className="text-center">
+//           <div className="flex justify-center mb-4">
+//             <div className="h-16 w-16 rounded-full bg-gradient-primary flex items-center justify-center">
+//               <LogIn className="h-8 w-8 text-primary-foreground" />
+//             </div>
+//           </div>
+//           <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
+//           <CardDescription className="text-base">
+//             Login with your email
+//           </CardDescription>
+//         </CardHeader>
+//         <CardContent>
+//           <form onSubmit={handleSubmit} className="space-y-6">
+//             <div className="space-y-2">
+//               <Label htmlFor="identifier">Email</Label>
+//               <Input
+//                 id="identifier"
+//                 value={identifier}
+//                 onChange={(e) => setIdentifier(e.target.value)}
+//                 placeholder="Enter your email"
+//                 required
+//                 disabled={isLoading}
+//                 className={identifierError ? "border-red-500" : ""}
+//               />
+//               {identifierError && (
+//                 <p className="text-sm text-red-500">{identifierError}</p>
+//               )}
+//             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Team Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your team password"
-                required
-                disabled={isLoading}
-              />
-            </div>
+//             <div className="space-y-2">
+//               <Label htmlFor="password">Team Password</Label>
+//               <Input
+//                 id="password"
+//                 type="password"
+//                 value={password}
+//                 onChange={(e) => setPassword(e.target.value)}
+//                 placeholder="Enter your team password"
+//                 required
+//                 disabled={isLoading}
+//               />
+//             </div>
 
-            <div className="space-y-3 pt-4">
-              <Dialog
-                open={isForgotDialogOpen}
-                onOpenChange={setIsForgotDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full text-sm text-white justify-center bg-orange-400 hover:bg-orange-400/80 mt-[-30px] hover:text-white"
-                    disabled={isLoading}
-                  >
-                    <Key className="mr-2 h-4 w-4" />
-                    Forgot Password?
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Reset Password</DialogTitle>
-                    <DialogDescription>
-                      Enter your email address and we'll send you a password
-                      reset link.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleForgotPassword}>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="forgot-email">Email Address</Label>
-                        <Input
-                          id="forgot-email"
-                          type="email"
-                          value={forgotEmail}
-                          onChange={(e) => setForgotEmail(e.target.value)}
-                          placeholder="Enter your email"
-                          required
-                          disabled={isForgotLoading}
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setIsForgotDialogOpen(false);
-                          setForgotEmail("");
-                        }}
-                        disabled={isForgotLoading}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={isForgotLoading}>
-                        {isForgotLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          "Send Reset Link"
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
+//             <div className="space-y-3 pt-4">
+//               <Dialog
+//                 open={isForgotDialogOpen}
+//                 onOpenChange={setIsForgotDialogOpen}
+//               >
+//                 <DialogTrigger asChild>
+//                   <Button
+//                     type="button"
+//                     variant="ghost"
+//                     className="w-full text-sm text-white justify-center bg-orange-400 hover:bg-orange-400/80 mt-[-30px] hover:text-white"
+//                     disabled={isLoading}
+//                   >
+//                     <Key className="mr-2 h-4 w-4" />
+//                     Forgot Password?
+//                   </Button>
+//                 </DialogTrigger>
+//                 <DialogContent className="sm:max-w-md">
+//                   <DialogHeader>
+//                     <DialogTitle>Reset Password</DialogTitle>
+//                     <DialogDescription>
+//                       Enter your email address and we'll send you a password
+//                       reset link.
+//                     </DialogDescription>
+//                   </DialogHeader>
+//                   <form onSubmit={handleForgotPassword}>
+//                     <div className="space-y-4 py-4">
+//                       <div className="space-y-2">
+//                         <Label htmlFor="forgot-email">Email Address</Label>
+//                         <Input
+//                           id="forgot-email"
+//                           type="email"
+//                           value={forgotEmail}
+//                           onChange={(e) => setForgotEmail(e.target.value)}
+//                           placeholder="Enter your email"
+//                           required
+//                           disabled={isForgotLoading}
+//                         />
+//                       </div>
+//                     </div>
+//                     <DialogFooter>
+//                       <Button
+//                         type="button"
+//                         variant="outline"
+//                         onClick={() => {
+//                           setIsForgotDialogOpen(false);
+//                           setForgotEmail("");
+//                         }}
+//                         disabled={isForgotLoading}
+//                       >
+//                         Cancel
+//                       </Button>
+//                       <Button type="submit" disabled={isForgotLoading}>
+//                         {isForgotLoading ? (
+//                           <>
+//                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+//                             Sending...
+//                           </>
+//                         ) : (
+//                           "Send Reset Link"
+//                         )}
+//                       </Button>
+//                     </DialogFooter>
+//                   </form>
+//                 </DialogContent>
+//               </Dialog>
 
-              <Button
-                type="submit"
-                className="w-full bg-black text-white hover:opacity-90"
-                disabled={isLoading || !!identifierError}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging in...
-                  </>
-                ) : (
-                  "Login"
-                )}
-              </Button>
+//               <Button
+//                 type="submit"
+//                 className="w-full bg-black text-white hover:opacity-90"
+//                 disabled={isLoading || !!identifierError}
+//               >
+//                 {isLoading ? (
+//                   <>
+//                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+//                     Logging in...
+//                   </>
+//                 ) : (
+//                   "Login"
+//                 )}
+//               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => router.push("/auth/student/register")}
-                disabled={isLoading}
-              >
-                Don&apos;t have a team? Register
-              </Button>
+//               <Button
+//                 type="button"
+//                 variant="outline"
+//                 className="w-full"
+//                 onClick={() => router.push("/auth/student/register")}
+//                 disabled={isLoading}
+//               >
+//                 Don&apos;t have a team? Register
+//               </Button>
 
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full text-sm text-muted-foreground hover:text-foreground"
-                    disabled={isLoading}
-                  >
-                    <Mail className="mr-2 h-4 w-4" />
-                    Resend Verification Link
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Resend Verification Email</DialogTitle>
-                    <DialogDescription>
-                      Enter your email address to receive a new verification
-                      link.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleResendVerification}>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="resend-email">
-                          Email Address (Team Leader)
-                        </Label>
-                        <Input
-                          id="resend-email"
-                          type="email"
-                          value={resendEmail}
-                          onChange={(e) => setResendEmail(e.target.value)}
-                          placeholder="Enter your email"
-                          required
-                          disabled={isResending}
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setIsDialogOpen(false);
-                          setResendEmail("");
-                        }}
-                        disabled={isResending}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={isResending}>
-                        {isResending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          "Send Verification Link"
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
+//               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+//                 <DialogTrigger asChild>
+//                   <Button
+//                     type="button"
+//                     variant="ghost"
+//                     className="w-full text-sm text-muted-foreground hover:text-foreground"
+//                     disabled={isLoading}
+//                   >
+//                     <Mail className="mr-2 h-4 w-4" />
+//                     Resend Verification Link
+//                   </Button>
+//                 </DialogTrigger>
+//                 <DialogContent className="sm:max-w-md">
+//                   <DialogHeader>
+//                     <DialogTitle>Resend Verification Email</DialogTitle>
+//                     <DialogDescription>
+//                       Enter your email address to receive a new verification
+//                       link.
+//                     </DialogDescription>
+//                   </DialogHeader>
+//                   <form onSubmit={handleResendVerification}>
+//                     <div className="space-y-4 py-4">
+//                       <div className="space-y-2">
+//                         <Label htmlFor="resend-email">
+//                           Email Address (Team Leader)
+//                         </Label>
+//                         <Input
+//                           id="resend-email"
+//                           type="email"
+//                           value={resendEmail}
+//                           onChange={(e) => setResendEmail(e.target.value)}
+//                           placeholder="Enter your email"
+//                           required
+//                           disabled={isResending}
+//                         />
+//                       </div>
+//                     </div>
+//                     <DialogFooter>
+//                       <Button
+//                         type="button"
+//                         variant="outline"
+//                         onClick={() => {
+//                           setIsDialogOpen(false);
+//                           setResendEmail("");
+//                         }}
+//                         disabled={isResending}
+//                       >
+//                         Cancel
+//                       </Button>
+//                       <Button type="submit" disabled={isResending}>
+//                         {isResending ? (
+//                           <>
+//                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+//                             Sending...
+//                           </>
+//                         ) : (
+//                           "Send Verification Link"
+//                         )}
+//                       </Button>
+//                     </DialogFooter>
+//                   </form>
+//                 </DialogContent>
+//               </Dialog>
+//             </div>
+//           </form>
+//         </CardContent>
+//       </Card>
+//     </div>
+//   );
+// };
 
-export default Login;
+// export default Login;
+
+
+import { redirect } from "next/navigation";
+
+export default function LoginRedirectPage() {
+  redirect("/");
+}

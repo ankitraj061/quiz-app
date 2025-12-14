@@ -207,6 +207,7 @@ const Register = () => {
                         placeholder="John Doe"
                         disabled={isLoading}
                         required
+                        className='mt-2'
                       />
                     </div>
                     <div>
@@ -219,6 +220,7 @@ const Register = () => {
                         placeholder="john@example.com"
                         disabled={isLoading}
                         required
+                        className='mt-2'
                       />
                     </div>
                     <div>
@@ -231,6 +233,7 @@ const Register = () => {
                         maxLength={10}
                         disabled={isLoading}
                         required
+                        className='mt-2'
                       />
                     </div>
                   </div>
